@@ -1,11 +1,10 @@
 import networkx as nx 
 import pandas as pd
-import matplotlib.pyplot as plt
 import community 
 
 def basicNetwork(): 
 
-	df = pd.read_csv("BIOGRID-Homosapien")
+	df = pd.read_csv("BIOGRID-Homosapien.csv")
 	nodesA = df['Entrez Gene Interactor A']
 	nodesB = df['Entrez Gene Interactor B']
 	nodes = pd.concat([nodesA, nodesB]) #get a list of all the nodes in the network
