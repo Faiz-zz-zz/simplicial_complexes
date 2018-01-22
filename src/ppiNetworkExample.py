@@ -2,6 +2,12 @@ import networkx as nx
 import pandas as pd
 import community 
 
+def print_degree(g):
+	nodes_list = g.nodes()
+	for node in nodes_list:
+		print(str(node) + ": " + str(g.degree(node)))
+
+
 def basicNetwork(): 
 
 	df = pd.read_csv("BIOGRID-Homosapien.csv")
@@ -21,5 +27,6 @@ def basicNetwork():
 	G.add_edges_from(edges)
 
 	print(nx.info(G)) #Gives basic info of the graph, number of nodes, edges and the average degree
+	print_degree(G)
 
 basicNetwork()
