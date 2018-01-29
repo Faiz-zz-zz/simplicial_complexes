@@ -1,4 +1,5 @@
 from collections import defaultdict
+from queue import PriorityQueue
 
 
 class Node:
@@ -32,11 +33,22 @@ class Graph:
     will be in this class as class methods.
     """
     def __init__(self, node, edges):
-        self.nodes = node
-        self.edges = edges
+        self.nodes = set(node)
+        self.edges = set(edges)
+        self.distance_map = {}
         # Only set if find_shortest_path was called once
         self.adj_matrix = None
         self.next_matrix = None
+        self.neighbour_map = defaultdict(set())
+        self.build_neighbour()
+        self.build_distance_map()
+
+    def build_distance_map(self):
+        self.distance_map = {(k.a, k.b): k.weight for k in edges}
+
+    def build_neighbour(self):
+        for edge in self.edges:
+            self.neighbour_map[edge.a].add(edge.b)
 
     def find_shortest_path(self):
         """
@@ -51,6 +63,7 @@ class Graph:
             dist_dict[(edge.b, edge.a)] = edge.weight
             next_dict[edge.a] = edge.b
 
+        nodes = list(self.nodes)
         for k in range(len(nodes)):
             for i in range(len(nodes)):
                 for j in range(len(nodes)):
@@ -65,21 +78,47 @@ class Graph:
         return self.adj_matrix
 
     def dijkstra(self, src, dest):
-        pass
+        dist = {}
+        prev = {}
+        dist[src] = 0
+
+        vertex_hq = PriorityQueue()
+        vertex_hq.put((0, src))
+
+        for node in self.nodes:
+            if node != src:
+                dist[node] = float('inf')
+                prev[node] = None
+
+        while vertex_pq:
+            curr_node = vertex_pq.get()
+            if curr_node == dest:
+                path = [src]
+                while path[-1] != dest:
+                    path.append(prev[path[-1]])
+                return dist[dest], prev
+
+            for nb in self.find_neighbours(curr_node):
+                alt_dist = dist[curr_node] + distance_map[(curr_node, nb)]
+                if alt_dist < dist[node]:
+                    dist[nb] = alt_dist
+                    prev[nb] = curr_node
+                    vertex_hq.put((dist[nb], nb))
 
     def find_distance(self, src, dist):
-        if adj_matrix:
+        if self.adj_matrix:
             mat = self.adj_matrix
             return mat[(src, dist)] if (src, dist) in mat else mat[(dist, src)]
         # apply dijkstra if we are using distance for just one pair.
+        dist, _ = self.dijkstra(src, dest)
 
-    def find_neighbout(self, node):
+    def find_neighbours(self, node):
         """
         Given a node, return all the neighbours.
         Input: node
         Output: set(nodes)
         """
-        return set()
+        return self.neighbour_map[node]
 
     def get_path(self, src, dest):
         """
@@ -87,4 +126,12 @@ class Graph:
         Input: Node
         Output: List(nodes)
         """
-        return []
+        if self.adj_matrix:
+            if not self.next_dict[(src, dest)]:
+                return []
+            path = [src]
+            while path[-1] != dest:
+                path.append(self.next_dict[(path[-1], dest)])
+            return path
+        _, path = self.dijkstra(src, dest)
+        return path
