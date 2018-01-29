@@ -111,6 +111,7 @@ class Graph:
             return mat[(src, dist)] if (src, dist) in mat else mat[(dist, src)]
         # apply dijkstra if we are using distance for just one pair.
         dist, _ = self.dijkstra(src, dest)
+        return dist
 
     def find_neighbours(self, node):
         """
