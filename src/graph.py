@@ -38,7 +38,7 @@ class Graph:
         self.distance_map = {}
         # Only set if find_shortest_path was called once
         self.adj_matrix = None
-        self.next_matrix = None
+        self.next_node_dict = None
         self.neighbour_map = defaultdict(set())
         self.build_neighbour()
         self.build_distance_map()
@@ -57,11 +57,11 @@ class Graph:
         Output: {(src, dest): dist} => assumes directed.
         """
         dist_dict = defaultdict(float('inf'))
-        next_dict = defaultdict(None)
+        next_node_dict = defaultdict(None)
 
         for edge in self.edges:
             dist_dict[(edge.b, edge.a)] = edge.weight
-            next_dict[edge.a] = edge.b
+            next_node_dict[edge.a] = edge.b
 
         nodes = list(self.nodes)
         for k in range(len(nodes)):
@@ -71,9 +71,9 @@ class Graph:
                     inter_dist = dist_dict[(n_i, n_k)] + dist_dict[(n_k, n_j)]
                     if dist_dict[(n_i, n_j)] > inter_dist:
                         dist_dict[(n_i, n_j)] = inter_dist
-                        next_dict[(n_i, n_j)] = next_dict[(n_i, n_k)]
+                        next_node_dict[(n_i, n_j)] = next_node_dict[(n_i, n_k)]
 
-        self.next_dict = next_dict
+        self.next_node_dict = next_node_dict
         self.adj_matrix = dist_dict
         return self.adj_matrix
 
@@ -127,12 +127,12 @@ class Graph:
         Input: Node
         Output: List(nodes)
         """
-        if self.adj_matrix:
-            if not self.next_dict[(src, dest)]:
+        if self.next_node_dict:
+            if not self.next_node_dict[(src, dest)]:
                 return []
             path = [src]
             while path[-1] != dest:
-                path.append(self.next_dict[(path[-1], dest)])
+                path.append(self.next_node_dict[(path[-1], dest)])
             return path
         _, path = self.dijkstra(src, dest)
         return path
