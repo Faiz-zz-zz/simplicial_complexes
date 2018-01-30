@@ -9,7 +9,7 @@ class Node:
     This is so that we don't need to repeat the code and can use the same
     property of nodes in every case.
     """
-    def __init__(self, id, description):
+    def __init__(self, id, description=None):
         self.id = id
         self.description = description
 

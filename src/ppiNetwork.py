@@ -10,7 +10,7 @@ nodes_dict = {}
 def create_nodes(node_ids):
     nodes = []
     for node_id in node_ids:
-        node = graph.Node(node_id, None)
+        node = graph.Node(node_id)
         nodes_dict[node_id] = node
         nodes.append(node)
     return nodes
