@@ -9,7 +9,7 @@ class Node:
     This is so that we don't need to repeat the code and can use the same
     property of nodes in every case.
     """
-    def __init__(self, id, description, node_type):
+    def __init__(self, id, description):
         self.id = id
         self.description = description
 
@@ -38,9 +38,9 @@ class Graph:
         # Only set if find_shortest_path was called once
         self.adj_matrix = None
         self.next_node_dict = None
-        self.neighbour_map = defaultdict(set())
-        self.build_neighbour()
-        self.build_distance_map()
+        # self.neighbour_map = defaultdict(set())
+        # self.build_neighbour()
+        # self.build_distance_map()
 
     def build_distance_map(self):
         self.distance_map = {(k.a, k.b): k.weight for k in edges}
