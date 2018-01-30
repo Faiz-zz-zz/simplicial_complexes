@@ -12,7 +12,6 @@ class Node:
     def __init__(self, id, description, node_type):
         self.id = id
         self.description = description
-        self.type = node_type  # Simplicial or PPI
 
 
 class Edge:
