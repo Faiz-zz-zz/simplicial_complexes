@@ -38,12 +38,12 @@ class Graph:
         # Only set if find_shortest_path was called once
         self.adj_matrix = None
         self.next_node_dict = None
-        # self.neighbour_map = defaultdict(set())
-        # self.build_neighbour()
-        # self.build_distance_map()
+        self.neighbour_map = defaultdict(set)
+        self.build_neighbour()
+        self.build_distance_map()
 
     def build_distance_map(self):
-        self.distance_map = {(k.a, k.b): k.weight for k in edges}
+        self.distance_map = {(k.a, k.b): k.weight for k in self.edges}
 
     def build_neighbour(self):
         for edge in self.edges:

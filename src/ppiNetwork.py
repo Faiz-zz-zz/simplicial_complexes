@@ -7,6 +7,7 @@ from graph import Graph
 
 nodes_dict = {}
 
+
 def create_nodes(node_ids):
     nodes = []
     for node_id in node_ids:

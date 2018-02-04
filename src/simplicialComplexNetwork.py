@@ -1,18 +1,26 @@
 import networkx as nx
 import pandas as pd
-import community
-import math as m
 from collections import defaultdict
-import graph as graph
-from graph import Node as Node
-from graph import Edge as Edge
-from graph import Graph as Graph
+from graph import Node
+from graph import Edge
+from graph import Graph
+from ppiNetwork import create_ppi_network
 
 
 class Simplice(Node):
     def __init__(self, gene_id, complex_name):
         Node.__init__(self, gene_id)
         self.complex_name = complex_name
+
+
+class SimpliceEdge(Edge):
+    def __init__(self, a, b):
+        Edge.__init__(self, a, b)
+
+
+class Simplex(Graph):
+    def __init__(self, nodes, edges):
+        Graph.__init__(self, nodes, edges)
 
 
 def print_degree(g):
@@ -70,8 +78,13 @@ def group_by_complexes(simplices):
 
 
 # Constructing the simplices from the complexes data
-def construct_simplices(gene_conversion_file_path, complexes_file_path, species):
-    from_to_ids, gene_names = get_gene_conversion_info(gene_conversion_file_path, species)
+def construct_simplices(
+        gene_conversion_file_path,
+        complexes_file_path, species):
+    from_to_ids, gene_names = get_gene_conversion_info(
+                                gene_conversion_file_path,
+                                species
+                            )
     genes, complexes_names = get_complexes_info(complexes_file_path)
 
     simplices = []
@@ -81,10 +94,33 @@ def construct_simplices(gene_conversion_file_path, complexes_file_path, species)
             simplices.append(Simplice(from_to_ids[g], c))
 
     grouped_simplices = group_by_complexes(simplices)
-    print_grouped_complexes(grouped_simplices)
-    
-    return grouped_simplices
+    simplice_nodes = []
+    ppi_network = create_ppi_network("../raw_data/yeast.csv")
+    simplice_edges = []
+    for simplices in grouped_simplices:
+        simplice_nodes.extend(simplices)
+        for node_a in simplices:
+            for node_b in simplices:
+                if node_a != node_b:
+                    simplice_edges.append(SimpliceEdge(node_a, node_b))
+    simplex = Simplex(set(simplice_nodes), set(simplice_edges))
+    edges = []
+    for edge in simplex.edges:
+        if Edge(edge.a, edge.b) not in ppi_network.edges:
+            ppi_network.edges.add(Edge(edge.a, edge.b))
+
+    return simplex, ppi_network
 
 
-# simplices = construct_simplices('/Users/matin/desktop/gene_ids.csv','/Users/matin/desktop/CYC2008_complex_v2.csv','Saccharomyces cerevisiae S288C')
+simplex, ppi_network = construct_simplices(
+            '../raw_data/gene_ids.csv',
+            '../raw_data/CYC2008_complex_v2.csv',
+            'Saccharomyces cerevisiae S288C'
+        )
 
+print("Printing Neighbours")
+
+for node in ppi_network.nodes:
+    print("Current node is :{}".format(node.id))
+    print(list(map(lambda k: k.id, ppi_network.find_neighbours(node))))
+    print("\n======\n")
