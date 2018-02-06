@@ -49,6 +49,32 @@ class Graph:
         for edge in self.edges:
             self.neighbour_map[edge.a].add(edge.b)
 
+        def dfs(self, graph, src):
+        """
+        Generic dfs that returns a set of visited nodes given a start node
+        """
+        visited, stack = set(), [src]
+        while stack:
+            node = stack.pop()
+            if node not in visited:
+                visited.add(node)
+                stack.extend(graph[node] - visited)
+        return visited
+
+    def unconnected_clusters(self, graph, src):
+        """
+        Returns the nodes in unconnected clusters
+        Assuming graph = set of all nodes
+        """
+        clusters = []
+        all_nodes = list(graphs.nodes)
+        while not all_nodes:
+            curr_node = all_nodes.pop()
+            curr_cluster = self.dfs(graph, src)
+            clusters.append(curr_cluster)
+            all_nodes = list(set(nodes) - curr_cluster)
+        return clusters
+
     def find_shortest_path(self):
         """
         Find shortest path between all the pairs of nodes.
