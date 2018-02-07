@@ -29,7 +29,7 @@ class Simplex(Graph):
         self.edge_triangle_map = defaultdict(set)
 
     def build_edge_to_triangle_map(triangle):
-        for (a, b) in itertools.product(triangle):
+        for (a, b) in itertools.product(triangle, triangle):
             if a == b: continue
             self.edge_triangle_map[Edge(a, b)].add(triangle)
 
