@@ -49,7 +49,7 @@ class Simplex(Graph):
         return self.triangles
 
 
-    def find_lower_adjacent(self, triangle, edge_to_triangle):
+    def find_lower_adjacent(self, triangle):
         edges = []
         edges.append(triangle[0] + triangle[1])
         edges.append(triangle[1] + triangle[2])
@@ -57,20 +57,20 @@ class Simplex(Graph):
 
         num_of_lower_adjacent = 0
         for edge in edges:
-            num_of_lower_adjacent += len(edge_to_triangle[edge])
+            num_of_lower_adjacent += len(self.edge_triangle_map[edge])
         return num_of_lower_adjacent
 
 
-    def is_partof_k_plus_one_simplex(self, tr_a, tr_b, edge_to_triangle):
-        diff_a = set(tr_a).difference(set(tr_b))
-        diff_b = set(tr_b).difference(set(tr_a))
+    def is_partof_k_plus_one_simplex(self, tr_a, tr_b):
+        diff_a = set(tr_a) - set(tr_b)
+        diff_b = set(tr_b) - set(tr_a)
         edge_a_b = (diff_a, diff_b)
-        if edge_a_b in edge_to_triangle:
+        if edge_a_b in self.edge_triangle_map:
             return True
         return False
 
 
-    def find_upper_adjacent(self, triangle, edge_to_triangle):
+    def find_upper_adjacent(self, triangle):
         edges = []
         edges.append(triangle[0] + triangle[1])
         edges.append(triangle[1] + triangle[2])
@@ -78,9 +78,9 @@ class Simplex(Graph):
 
         num_of_upper_adjacent = 0
         for edge in edges:
-            triangles_edge_is_partof = edge_to_triangle[edge]
+            triangles_edge_is_partof = self.edge_triangle_map[edge]
             for tr in triangles_edge_is_partof:
-                if is_partof_k_plus_one_simplex(triangle, tr, edge_to_triangle):
+                if is_partof_k_plus_one_simplex(triangle, tr):
                     num_of_upper_adjacent += 1
         return num_of_upper_adjacent
 
@@ -115,7 +115,7 @@ class Simplex(Graph):
         betweenness = 0
         for tr_a in triangles_list:
             for tr_b in triangles_list:
-                if tr_a is not tr_b:
+                if tr_a != tr_b:
                     shortest_paths = find_shortest_paths(tr_a, tr_b)
                     num_of_shortest_paths = len(shortest_paths)
                     triangle_in_path = count_triangle_in_path(triangle, shortest_paths)
