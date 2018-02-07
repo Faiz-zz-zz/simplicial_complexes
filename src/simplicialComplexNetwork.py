@@ -58,7 +58,7 @@ class Simplex(Graph):
         num_of_lower_adjacent = 0
         for edge in edges:
             num_of_lower_adjacent += len(edge_to_triangle[edge])
-        return find_lower_adjacent
+        return num_of_lower_adjacent
 
 
     def is_partof_k_plus_one_simplex(self, tr_a, tr_b, edge_to_triangle):
