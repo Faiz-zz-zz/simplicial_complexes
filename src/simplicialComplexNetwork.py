@@ -27,6 +27,7 @@ class Simplex(Graph):
         Graph.__init__(self, nodes, edges)
         self.triangles = defaultdict(set)
         self.edge_triangle_map = defaultdict(set)
+        self.generate_triangles()
 
     def build_edge_to_triangle_map(triangle):
         for (a, b) in itertools.product(triangle, triangle):
@@ -97,8 +98,8 @@ class Simplex(Graph):
 
     # list of all the triangles
     # This is implemented according to definition 15 in the paper
-    def closeness_centrality(self, triangle, triangles_list):
-        for tr in triangles_list:
+    def closeness_centrality(self, triangle):
+        for tr in self.triangles:
             shortest_paths_sum += find_shortest_path(triangle, tr)
         return (1/shortest_paths_sum)
 
@@ -111,15 +112,16 @@ class Simplex(Graph):
         return in_path
 
 
-    def betweenness_centrality(self, triangle, triangles_list):
+    def betweenness_centrality(self, triangle):
         betweenness = 0
-        for tr_a in triangles_list:
-            for tr_b in triangles_list:
+        for tr_a in self.triangles:
+            for tr_b in self.triangles:
                 if tr_a != tr_b:
                     shortest_paths = find_shortest_paths(tr_a, tr_b)
                     num_of_shortest_paths = len(shortest_paths)
                     triangle_in_path = count_triangle_in_path(triangle, shortest_paths)
                     betweenness += triangle_in_path/num_of_shortest_paths
+        return betweenness
 
 
 def print_degree(g):
@@ -217,9 +219,7 @@ simplex, ppi_network = construct_simplices(
             'Saccharomyces cerevisiae S288C'
         )
 
-print("Printing Neighbours")
-
-for node in ppi_network.nodes:
-    print("Current node is :{}".format(node.id))
-    print(list(map(lambda k: k.id, ppi_network.find_neighbours(node))))
-    print("\n======\n")
+for triangle in simplex.triangles:
+    print("Triangle: ({}, {}, {})".format(triangle[0].id, triangle[1].id, triangle[0].id))
+    print("Betweennes Centrality: {}".format(simlex.betweenness_centrality(triangle)))
+    print("Closeness Centrality: {}".format(simplex.closeness_centrality(triangle)))
