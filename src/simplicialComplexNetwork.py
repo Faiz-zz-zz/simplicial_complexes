@@ -6,6 +6,9 @@ from graph import Edge
 from graph import Graph
 from ppiNetwork import create_ppi_network
 
+# {(2, 3, 4) (2, 3, 1) (3, 4, 5)}
+# {(2, 3) (2, 4) (2, 5) (3, 1) (3, 5) (3, 2)}
+
 
 class Simplice(Node):
     def __init__(self, gene_id, complex_name):
@@ -21,6 +24,73 @@ class SimpliceEdge(Edge):
 class Simplex(Graph):
     def __init__(self, nodes, edges):
         Graph.__init__(self, nodes, edges)
+
+
+    def find_lower_adjacent(self, triangle, edge_to_triangle):
+        edges = []
+        edges.append(triangle[0] + triangle[1])
+        edges.append(triangle[1] + triangle[2])
+        edges.append(triangle[0] + triangle[2])
+
+        num_of_lower_adjacent = 0
+        for edge in edges:
+            num_of_lower_adjacent += len(edge_to_triangle[edge])
+        return find_lower_adjacent
+
+
+    def find_upper_adjacent(self, triangle, edge_to_triangle):
+        edges = []
+        edges.append(triangle[0] + triangle[1])
+        edges.append(triangle[1] + triangle[2])
+        edges.append(triangle[0] + triangle[2])
+
+        num_of_upper_adjacent = 0
+        for edge in edges:
+            triangles_edge_is_partof = edge_to_triangle[edge]
+            for tr in triangles_edge_is_partof:
+                diff_a = set(triangle).difference(set(tr))
+                diff_b = set(tr).difference(set(triangle))
+                edge_a_b = (diff_a, diff_b)
+                if edge_a_b in edge_to_triangle:
+                    num_of_upper_adjacent += 1
+        return num_of_upper_adjacent
+
+
+    def find_shortest_paths(self, triangle_a, triangle_b):
+        pass
+
+    # we need to make a map of the edges to the trianbles they are part of
+    # {(2, 3) -> (3, 4, 1) (2, 3, 4)}
+    def degree_distribution_centrality(self, triangle):
+        lower_adjacent = find_lower_adjacent(triangle)
+        upper_adjacent = find_upper_adjacent(triangle)
+        degree = lower_adjacent + upper_adjacent
+
+    # list of all the triangles
+    # This is implemented according to definition 15 in the paper
+    def closeness_centrality(self, triangle, triangles_list):
+        for tr in triangles_list:
+            shortest_paths_sum += find_shortest_path(triangle, tr)
+        return (1/shortest_paths_sum)
+
+
+    def count_triangle_in_path(self, triangle, paths):
+        in_path = 0
+        for path in paths:
+            if triangle in paths:
+                in_path += 1
+        return in_path
+
+
+    def betweenness_centrality(self, triangle, triangles_list):
+        betweenness = 0
+        for tr_a in triangles_list:
+            for tr_b in triangles_list:
+                if tr_a is not tr_b:
+                    shortest_paths = find_shortest_paths(tr_a, tr_b)
+                    num_of_shortest_paths = len(shortest_paths)
+                    triangle_in_path = count_triangle_in_path(triangle, shortest_paths)
+                    betweenness += triangle_in_path/num_of_shortest_paths
 
 
 def print_degree(g):
