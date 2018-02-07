@@ -26,7 +26,7 @@ class Simplex(Graph):
     def __init__(self, nodes, edges):
         Graph.__init__(self, nodes, edges)
         self.triangles = defaultdict(set)
-        self.edge_triangle_map =
+        self.edge_triangle_map = defaultdict(set)
 
     def build_edge_to_triangle_map(triangle):
         for (a, b) in itertools.product(triangle):
