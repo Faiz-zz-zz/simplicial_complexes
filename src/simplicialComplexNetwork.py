@@ -38,6 +38,15 @@ class Simplex(Graph):
         return find_lower_adjacent
 
 
+    def is_partof_k_plus_one_simplex(self, tr_a, tr_b, edge_to_triangle):
+        diff_a = set(tr_a).difference(set(tr_b))
+        diff_b = set(tr_b).difference(set(tr_a))
+        edge_a_b = (diff_a, diff_b)
+        if edge_a_b in edge_to_triangle:
+            return True
+        return False
+
+
     def find_upper_adjacent(self, triangle, edge_to_triangle):
         edges = []
         edges.append(triangle[0] + triangle[1])
@@ -48,10 +57,7 @@ class Simplex(Graph):
         for edge in edges:
             triangles_edge_is_partof = edge_to_triangle[edge]
             for tr in triangles_edge_is_partof:
-                diff_a = set(triangle).difference(set(tr))
-                diff_b = set(tr).difference(set(triangle))
-                edge_a_b = (diff_a, diff_b)
-                if edge_a_b in edge_to_triangle:
+                if is_partof_k_plus_one_simplex(triangle, tr, edge_to_triangle):
                     num_of_upper_adjacent += 1
         return num_of_upper_adjacent
 
