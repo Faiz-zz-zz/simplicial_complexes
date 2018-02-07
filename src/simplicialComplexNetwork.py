@@ -90,10 +90,11 @@ class Simplex(Graph):
 
     # we need to make a map of the edges to the trianbles they are part of
     # {(2, 3) -> (3, 4, 1) (2, 3, 4)}
-    def degree_distribution_centrality(self, triangle):
+    def degree_distribution_centrality(self, triangle, triangles_list):
         lower_adjacent = find_lower_adjacent(triangle)
         upper_adjacent = find_upper_adjacent(triangle)
         degree = lower_adjacent + upper_adjacent
+        return degree/len(triangles_list)
 
     # list of all the triangles
     # This is implemented according to definition 15 in the paper
