@@ -124,6 +124,32 @@ class Simplex(Graph):
                     betweenness += triangle_in_path/num_of_shortest_paths
         return betweenness
 
+def dfs_all(self, start, end, all_simplicies):
+    """
+    Iterative dfs that generates all paths from start to end (keeping track of the node ordering in our own stack)
+    """
+    stack = [(start, [start])]
+    while stack:
+        simplex_node, path = list(stack.pop())
+        if simplex_node == end:
+            yield path
+        for adj in all_simplicies[simplex_node] - set(path)):
+            for i in range(len(all_simplicies)):
+                if(len(adj - set(all_simplicies[i])) == 1):
+                    stack.append((adj, path + [adj])
+__
+def find_shortest_path(self, start, end, all_simplicies):
+    """
+    Given a 3 tuple start [(a,b,c)] and 3 tuple end [(x,y,z)], and a list of 3 tuples of all 3-simplicies (all_simplicies)
+    This tries to find the shortest path among all the paths returned by the dfs function
+    """
+    all_paths = dfs_all(start, end, all_simplicies)
+    for i in range(len(all_paths)):
+        if len(all_paths[i]) > shortest:
+            all_paths.pop(i)
+        else:
+            shortest = len(all_paths[i])
+    return all_paths
 
 def print_degree(g):
     nodes_list = g.nodes()
