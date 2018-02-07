@@ -13,6 +13,9 @@ class Node:
         self.id = id
         self.description = description
 
+    def __eq__(self, other):
+        return other.id == self.id
+
 
 class Edge:
     """
@@ -22,6 +25,9 @@ class Edge:
         self.a = a
         self.b = b
         self.weight = weight
+
+    def __eq__(self, other):
+        return (not (set([other.a, other.b]) - set([self.a, self.b])))
 
 
 class Graph:

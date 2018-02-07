@@ -1,6 +1,7 @@
 import networkx as nx
 import pandas as pd
 from collections import defaultdict
+import itertools
 from graph import Node
 from graph import Edge
 from graph import Graph
@@ -24,6 +25,28 @@ class SimpliceEdge(Edge):
 class Simplex(Graph):
     def __init__(self, nodes, edges):
         Graph.__init__(self, nodes, edges)
+        self.triangles = defaultdict(set)
+        self.edge_triangle_map =
+
+    def build_edge_to_triangle_map(triangle):
+        for (a, b) in itertools.product(triangle):
+            if a == b: continue
+            self.edge_triangle_map[Edge(a, b)].add(triangle)
+
+    def generate_triangles(self):
+        triangles = set()
+        for node in self.nodes:
+            neighbours = self.find_neighbours(node)
+            for (a, b) in itertools.product(neighbours, neighbours):
+                if a == b: continue
+                if Edge(a, b) in self.edges:
+                    # sorting to have it unique in the set.
+                    triangle = tuple([a, b, node].sort(key=lambda k: k.id))
+                    if triangle not in triangles:
+                        triangles.add(triangle)
+                        build_edge_to_triangle_map(triangle)
+        self.trianbles = trianbles
+        return self.triangles
 
 
     def find_lower_adjacent(self, triangle, edge_to_triangle):
