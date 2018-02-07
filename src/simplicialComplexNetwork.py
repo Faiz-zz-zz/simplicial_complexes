@@ -45,7 +45,7 @@ class Simplex(Graph):
                     if triangle not in triangles:
                         triangles.add(triangle)
                         build_edge_to_triangle_map(triangle)
-        self.trianbles = trianbles
+        self.triangles = triangles
         return self.triangles
 
 
