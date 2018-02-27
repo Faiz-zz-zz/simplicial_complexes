@@ -1,4 +1,4 @@
-import networkx as nx
+# import networkx as nx
 import pandas as pd
 from collections import defaultdict
 import itertools
@@ -42,7 +42,8 @@ class Simplex(Graph):
                 if Edge(a, b) in self.edges:
                     # sorting to have it unique in the set.
                     triangle = tuple([a, b, node].sort(key=lambda k: k.id))
-                    if triangle not in triangles:
+                    print(str(triangle))
+                    if (triangle not in triangles):
                         triangles.add(triangle)
                         build_edge_to_triangle_map(triangle)
         self.triangles = triangles
@@ -203,7 +204,7 @@ def construct_simplices(
             for node_b in simplices:
                 if node_a != node_b:
                     simplice_edges.append(SimpliceEdge(node_a, node_b))
-    simplex = Simplex(set(simplice_nodes), set(simplice_edges))
+    simplex = Simplex(simplice_nodes, simplice_edges)
     edges = []
     for edge in simplex.edges:
         if Edge(edge.a, edge.b) not in ppi_network.edges:
@@ -218,9 +219,14 @@ simplex, ppi_network = construct_simplices(
             'Saccharomyces cerevisiae S288C'
         )
 
-print("Printing Neighbours")
 
-for node in ppi_network.nodes:
-    print("Current node is :{}".format(node.id))
-    print(list(map(lambda k: k.id, ppi_network.find_neighbours(node))))
-    print("\n======\n")
+triangles = simplex.generate_triangles()
+
+# for item in triangles:
+#     print(str(item))
+# print("Printing Neighbours")
+
+# for node in ppi_network.nodes:
+#     print("Current node is :{}".format(node.id))
+#     print(list(map(lambda k: k.id, ppi_network.find_neighbours(node))))
+#     print("\n======\n")
