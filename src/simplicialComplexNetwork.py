@@ -2,14 +2,11 @@
 import pandas as pd
 from collections import defaultdict
 import itertools
-from graph import Node
-from graph import Edge
-from graph import Graph
+from graph import Node, Edge, Graph
 from ppiNetwork import create_ppi_network
 
 # {(2, 3, 4) (2, 3, 1) (3, 4, 5)}
 # {(2, 3) (2, 4) (2, 5) (3, 1) (3, 5) (3, 2)}
-
 
 class Simplice(Node):
     def __init__(self, gene_id, complex_name):
@@ -21,14 +18,24 @@ class SimpliceEdge(Edge):
     def __init__(self, a, b):
         Edge.__init__(self, a, b)
 
+    #def __eq__(self, other):
+    #    return other.a == self.a and other.b == self.b
+
 
 class Simplex(Graph):
     def __init__(self, nodes, edges):
         Graph.__init__(self, nodes, edges)
         self.triangles = defaultdict(set)
         self.edge_triangle_map = defaultdict(set)
+        self.edge_map = {}
+        self.generate_edge_map()
+        self.generate_triangles()
 
-    def build_edge_to_triangle_map(triangle):
+    def generate_edge_map(self):
+        for edge in self.edges:
+            self.edge_map[(edge.a, edge.b)] = True
+
+    def build_edge_to_triangle_map(self, triangle):
         for (a, b) in itertools.product(triangle, triangle):
             if a == b: continue
             self.edge_triangle_map[Edge(a, b)].add(triangle)
@@ -39,27 +46,31 @@ class Simplex(Graph):
             neighbours = self.find_neighbours(node)
             for (a, b) in itertools.product(neighbours, neighbours):
                 if a == b: continue
-                if Edge(a, b) in self.edges:
+                if (a, b) in self.edge_map or (b, a) in self.edge_map:
                     # sorting to have it unique in the set.
-                    triangle = tuple([a, b, node].sort(key=lambda k: k.id))
-                    print(str(triangle))
-                    if (triangle not in triangles):
+
+                    triangle = [a, b, node]
+                    triangle.sort(key=lambda k: k.id)
+                    triangle = tuple(triangle)
+                    if triangle not in triangles:
                         triangles.add(triangle)
-                        build_edge_to_triangle_map(triangle)
+                        self.build_edge_to_triangle_map(triangle)
         self.triangles = triangles
         return self.triangles
 
 
     def find_lower_adjacent(self, triangle):
         edges = []
-        edges.append(triangle[0] + triangle[1])
-        edges.append(triangle[1] + triangle[2])
-        edges.append(triangle[0] + triangle[2])
+        edges.append((triangle[0], triangle[1]))
+        edges.append((triangle[1],  triangle[2]))
+        edges.append((triangle[0], triangle[2]))
 
         num_of_lower_adjacent = 0
+        neighbours = set()
         for edge in edges:
             num_of_lower_adjacent += len(self.edge_triangle_map[edge])
-        return num_of_lower_adjacent
+            neighbours |= (self.edge_triangle_map[edge])
+        return num_of_lower_adjacent, neighbours
 
 
     def is_partof_k_plus_one_simplex(self, tr_a, tr_b):
@@ -86,23 +97,63 @@ class Simplex(Graph):
         return num_of_upper_adjacent
 
 
-    def find_shortest_paths(self, triangle_a, triangle_b):
-        pass
+    def dfs_all(self, start, end):
+        """
+        Iterative dfs that generates all paths from start to end (keeping track of the node ordering in our own stack)
+        """
+        stack = [(start, [start])]
+        paths = []
+        while stack:
+            simplex_node, path = list(stack.pop())
+            if simplex_node == end:
+                paths.append(path)
+            _, simplices_connected = self.find_lower_adjacent(simplex_node)
+            for adj in (simplices_connected - set(path)):
+                for i in range(len(simplices_connected)):
+                    _, new_simplices_connected = self.find_lower_adjacent(simplices_connected[i])
+                    if(len(adj - set(new_simplices_connected)) == 1):
+                        stack.append((adj, path + [adj]))
+        return paths
+
+    def find_shortest_path(self, start, end):
+        """
+        Given a 3 tuple start [(a,b,c)] and 3 tuple end [(x,y,z)], and a list of 3 tuples of all 3-simplicies (all_simplicies)
+        This tries to find the shortest path among all the paths returned by the dfs function
+        """
+        all_paths = self.dfs_all(start, end)
+        for i in range(len(all_paths)):
+            if len(all_paths[i]) > shortest:
+                all_paths.pop(i)
+            else:
+                shortest = len(all_paths[i])
+        return all_paths
+
+
 
     # we need to make a map of the edges to the trianbles they are part of
     # {(2, 3) -> (3, 4, 1) (2, 3, 4)}
-    def degree_distribution_centrality(self, triangle, triangles_list):
-        lower_adjacent = find_lower_adjacent(triangle)
+    def degree_distribution_centrality(self, triangle):
+        lower_adjacent, neighbours = find_lower_adjacent(triangle)
         upper_adjacent = find_upper_adjacent(triangle)
         degree = lower_adjacent + upper_adjacent
-        return degree/len(triangles_list)
+        return degree/len(self.triangles)
 
     # list of all the triangles
     # This is implemented according to definition 15 in the paper
-    def closeness_centrality(self, triangle, triangles_list):
-        for tr in triangles_list:
-            shortest_paths_sum += find_shortest_path(triangle, tr)
+    def closeness_centrality(self, triangle):
+        for tr in self.triangles:
+            shortest_paths_sum += self.find_shortest_path(triangle, tr)
         return (1/shortest_paths_sum)
+
+
+    def give_me_random_list(self, n):
+        from random import choice
+        if n < len(self.triangles): return self.triangles
+        ret = set()
+        while (len(ret)) < n:
+            _item = random.choice(self.triangles)
+            ret.add(_item)
+        return ret
 
 
     def count_triangle_in_path(self, triangle, paths):
@@ -113,16 +164,17 @@ class Simplex(Graph):
         return in_path
 
 
-    def betweenness_centrality(self, triangle, triangles_list):
+    def betweenness_centrality(self, triangle):
         betweenness = 0
-        for tr_a in triangles_list:
-            for tr_b in triangles_list:
+        for tr_a in self.triangles:
+            for tr_b in self.triangles:
                 if tr_a != tr_b:
-                    shortest_paths = find_shortest_paths(tr_a, tr_b)
+                    shortest_paths = self.find_shortest_path(tr_a, tr_b)
                     num_of_shortest_paths = len(shortest_paths)
-                    triangle_in_path = count_triangle_in_path(triangle, shortest_paths)
-                    betweenness += triangle_in_path/num_of_shortest_paths
-
+                    triangle_in_path = self.count_triangle_in_path(triangle, shortest_paths)
+                    if num_of_shortest_paths:
+                        betweenness += triangle_in_path/num_of_shortest_paths
+        return betweenness
 
 def print_degree(g):
     nodes_list = g.nodes()
@@ -230,3 +282,4 @@ triangles = simplex.generate_triangles()
 #     print("Current node is :{}".format(node.id))
 #     print(list(map(lambda k: k.id, ppi_network.find_neighbours(node))))
 #     print("\n======\n")
+

@@ -30,11 +30,13 @@ class Edge:
         self.b = b
         self.weight = weight
 
+
     def __eq__(self, other):
         return (not (set([other.a, other.b]) - set([self.a, self.b])))
 
     def __hash__(self):
         return hash((self.a.id, self.b.id))
+
 
 
 class Graph:
