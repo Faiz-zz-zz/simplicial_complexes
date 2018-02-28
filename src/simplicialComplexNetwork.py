@@ -61,16 +61,16 @@ class Simplex(Graph):
 
     def find_lower_adjacent(self, triangle):
         edges = []
-        edges.append((triangle[0], triangle[1]))
-        edges.append((triangle[1],  triangle[2]))
-        edges.append((triangle[0], triangle[2]))
+        edges.append(Edge(triangle[0], triangle[1]))
+        edges.append(Edge(triangle[1],  triangle[2]))
+        edges.append(Edge(triangle[0], triangle[2]))
 
         num_of_lower_adjacent = 0
         neighbours = set()
         for edge in edges:
             num_of_lower_adjacent += len(self.edge_triangle_map[edge])
             neighbours |= (self.edge_triangle_map[edge])
-        return num_of_lower_adjacent, neighbours
+        return num_of_lower_adjacent, list(neighbours)
 
 
     def is_partof_k_plus_one_simplex(self, tr_a, tr_b):
@@ -84,15 +84,15 @@ class Simplex(Graph):
 
     def find_upper_adjacent(self, triangle):
         edges = []
-        edges.append(triangle[0] + triangle[1])
-        edges.append(triangle[1] + triangle[2])
-        edges.append(triangle[0] + triangle[2])
+        edges.append((triangle[0], triangle[1]))
+        edges.append((triangle[1],triangle[2]))
+        edges.append((triangle[0],triangle[2]))
 
         num_of_upper_adjacent = 0
         for edge in edges:
             triangles_edge_is_partof = self.edge_triangle_map[edge]
             for tr in triangles_edge_is_partof:
-                if is_partof_k_plus_one_simplex(triangle, tr):
+                if self.is_partof_k_plus_one_simplex(triangle, tr):
                     num_of_upper_adjacent += 1
         return num_of_upper_adjacent
 
@@ -108,10 +108,10 @@ class Simplex(Graph):
             if simplex_node == end:
                 paths.append(path)
             _, simplices_connected = self.find_lower_adjacent(simplex_node)
-            for adj in (simplices_connected - set(path)):
+            for adj in (set(simplices_connected) - set(path)):
                 for i in range(len(simplices_connected)):
                     _, new_simplices_connected = self.find_lower_adjacent(simplices_connected[i])
-                    if(len(adj - set(new_simplices_connected)) == 1):
+                    if(len(set(adj) - set(new_simplices_connected)) == 1):
                         stack.append((adj, path + [adj]))
         return paths
 
@@ -121,6 +121,7 @@ class Simplex(Graph):
         This tries to find the shortest path among all the paths returned by the dfs function
         """
         all_paths = self.dfs_all(start, end)
+        shortest = 0
         for i in range(len(all_paths)):
             if len(all_paths[i]) > shortest:
                 all_paths.pop(i)
@@ -133,16 +134,23 @@ class Simplex(Graph):
     # we need to make a map of the edges to the trianbles they are part of
     # {(2, 3) -> (3, 4, 1) (2, 3, 4)}
     def degree_distribution_centrality(self, triangle):
-        lower_adjacent, neighbours = find_lower_adjacent(triangle)
-        upper_adjacent = find_upper_adjacent(triangle)
+        lower_adjacent, neighbours = self.find_lower_adjacent(triangle)
+        upper_adjacent = self.find_upper_adjacent(triangle)
         degree = lower_adjacent + upper_adjacent
         return degree/len(self.triangles)
 
     # list of all the triangles
     # This is implemented according to definition 15 in the paper
     def closeness_centrality(self, triangle):
+        shortest_paths_sum = 0
+        # paths_file = open("paths.txt", "w")
+        # paths_file.write("This is the node {} {} {}".format(traingle))
         for tr in self.triangles:
-            shortest_paths_sum += self.find_shortest_path(triangle, tr)
+            paths = self.find_shortest_path(triangle, tr)
+            # paths_file.write("These are the lengths of paths " + str(len(paths)))
+            if len(paths):
+                shortest_paths_sum += len(paths[0])
+        paths_file.close()
         return (1/shortest_paths_sum)
 
 
@@ -271,11 +279,13 @@ simplex, ppi_network = construct_simplices(
             'Saccharomyces cerevisiae S288C'
         )
 
+simplex.generate_triangles()
+for triangle in simplex.triangles:
+    #degree_dist = simplex.degree_distribution_centrality(triangle)
+    closeness = simplex.closeness_centrality(triangle)
+    print (closeness)
 
-triangles = simplex.generate_triangles()
 
-# for item in triangles:
-#     print(str(item))
 # print("Printing Neighbours")
 
 # for node in ppi_network.nodes:
