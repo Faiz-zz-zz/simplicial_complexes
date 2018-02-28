@@ -1,0 +1,6 @@
+RAW_HUMAN_PPI = "human.csv"
+RAW_YEAST_PPI = "yeast.csv"
+RAW_HUMAN_COMPLEX_JSON = "human_complex.json"
+RAW_HUMAN_COMPLEX = "human_complex.csv"
+RAW_YEAST_COMPLEX = "yeast_complex.csv"
+GENE_ID_CONVERSION = "gene-id_conversion.json"

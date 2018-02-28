@@ -272,13 +272,6 @@ def construct_simplices(
 
     return simplex, ppi_network
 
-
-simplex, ppi_network = construct_simplices(
-            '../raw_data/gene_ids.csv',
-            '../raw_data/CYC2008_complex_v2.csv',
-            'Saccharomyces cerevisiae S288C'
-        )
-
 simplex.generate_triangles()
 for triangle in simplex.triangles:
     #degree_dist = simplex.degree_distribution_centrality(triangle)
@@ -286,10 +279,4 @@ for triangle in simplex.triangles:
     print (closeness)
 
 
-# print("Printing Neighbours")
-
-# for node in ppi_network.nodes:
-#     print("Current node is :{}".format(node.id))
-#     print(list(map(lambda k: k.id, ppi_network.find_neighbours(node))))
-#     print("\n======\n")
-
+def generate_metrics(methods, data_set):
