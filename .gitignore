@@ -1,2 +1,6 @@
 raw_data/human.csv
 raw_data/yeast.csv
+raw_data/cleaned/human.csv
+raw_data/cleaned/yeast.csv
+raw_data/cleaned/human_complex.csv
+raw_data/cleaned/yeast_complex.csv
