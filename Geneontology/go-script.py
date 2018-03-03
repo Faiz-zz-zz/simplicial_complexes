@@ -23,13 +23,20 @@ def mapping():
     exp_valid_df = df['Evidence']
     map = {}
     for i in range(0, no_of_rows):
-        if(exp_valid_df[i] == 'EXP' or exp_valid_df[i] == 'IDA' or exp_valid_df[i] == 'IPI' or exp_valid_df[i] == 'IMP' or exp_valid_df[i] == 'IGI' or exp_valid_df[i] == 'IEP'):
+        if(exp_valid_df[i] == 'EXP' or
+        exp_valid_df[i] == 'IDA' or
+        exp_valid_df[i] == 'IPI' or
+        exp_valid_df[i] == 'IMP' or
+        exp_valid_df[i] == 'IGI' or
+        exp_valid_df[i] == 'IEP'):
             if(gene_df[i] in map):
                 array = map[gene_df[i]]
-                array.append(annotation_df[i])
-                map[gene_df[i]] = array
+                if(annotation_df[i] not in array):
+                    array.append(annotation_df[i])
+                    map[gene_df[i]] = array
             else:
                 map[gene_df[i]] = [annotation_df[i]]
     print(gene_df[10], map[gene_df[10]])
+
 # convert_to_csv()
 mapping()
