@@ -1,5 +1,6 @@
 import csv
 import pandas as pd
+import numpy
 
 def convert_to_csv():
     with open('sgd_merged.txt') as fin, open('csv_format.csv', 'w') as fout:
@@ -36,7 +37,27 @@ def mapping():
                     map[gene_df[i]] = array
             else:
                 map[gene_df[i]] = [annotation_df[i]]
-    print(gene_df[10], map[gene_df[10]])
+    # print(gene_df[10], map[gene_df[10]])
+    return map
+
+def generate_matrix():
+    df = pd.read_csv('csv_format.csv', sep='\t')
+    no_of_genes = df.shape[0]
+    annotation_df = df['GO ID']
+    myset = set()
+    for i in range(0, no_of_genes):
+        myset.add(annotation_df[i])
+    no_of_annotations = len(myset)
+    # matrix = numpy.zeros((no_of_genes, no_of_annotations))    # can't use numpy cos array too big :( )
+    hashmap = mapping()
+    w, h = no_of_annotations, no_of_genes;
+    matrix = [[0 for x in range(w)] for y in range(h)]
+    for i in range(0, h):
+        for j in range(0, w):
+            if(annotation_df[j] in hashmap[i]):
+                matrix[i][j] = 1
+    print(matrix[0][0])
 
 # convert_to_csv()
-mapping()
+# mapping()
+generate_matrix()
