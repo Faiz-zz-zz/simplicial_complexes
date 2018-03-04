@@ -4,6 +4,8 @@ from collections import defaultdict
 import itertools
 from graph import Node, Edge, Graph
 from ppiNetwork import create_ppi_network
+from queue import Queue
+from tqdm import tqdm
 
 # {(2, 3, 4) (2, 3, 1) (3, 4, 5)}
 # {(2, 3) (2, 4) (2, 5) (3, 1) (3, 5) (3, 2)}
@@ -74,19 +76,22 @@ class Simplex(Graph):
 
 
     def is_partof_k_plus_one_simplex(self, tr_a, tr_b):
+        # assumed they share an edge
+
         diff_a = set(tr_a) - set(tr_b)
         diff_b = set(tr_b) - set(tr_a)
-        edge_a_b = (diff_a, diff_b)
-        if edge_a_b in self.edge_triangle_map:
-            return True
+        if diff_a and diff_b:
+            edge_a_b = Edge(Node(diff_a.pop()), Node(diff_b.pop()))
+            if edge_a_b in self.edge_triangle_map:
+                return True
         return False
 
 
     def find_upper_adjacent(self, triangle):
         edges = []
-        edges.append((triangle[0], triangle[1]))
-        edges.append((triangle[1],triangle[2]))
-        edges.append((triangle[0],triangle[2]))
+        edges.append(Edge(triangle[0], triangle[1]))
+        edges.append(Edge(triangle[1],triangle[2]))
+        edges.append(Edge(triangle[0],triangle[2]))
 
         num_of_upper_adjacent = 0
         for edge in edges:
@@ -107,6 +112,7 @@ class Simplex(Graph):
             simplex_node, path = list(stack.pop())
             if simplex_node == end:
                 paths.append(path)
+
             _, simplices_connected = self.find_lower_adjacent(simplex_node)
             for adj in (set(simplices_connected) - set(path)):
                 for i in range(len(simplices_connected)):
@@ -115,21 +121,94 @@ class Simplex(Graph):
                         stack.append((adj, path + [adj]))
         return paths
 
-    def find_shortest_path(self, start, end):
-        """
-        Given a 3 tuple start [(a,b,c)] and 3 tuple end [(x,y,z)], and a list of 3 tuples of all 3-simplicies (all_simplicies)
-        This tries to find the shortest path among all the paths returned by the dfs function
-        """
-        all_paths = self.dfs_all(start, end)
-        shortest = 0
-        for i in range(len(all_paths)):
-            if len(all_paths[i]) > shortest:
-                all_paths.pop(i)
-            else:
-                shortest = len(all_paths[i])
-        return all_paths
+
+    # def find_shortest_path(self, start, end):
+    #     """
+    #     Given a 3 tuple start [(a,b,c)] and 3 tuple end [(x,y,z)], and a list of 3 tuples of all 3-simplicies (all_simplicies)
+    #     This tries to find the shortest path among all the paths returned by the dfs function
+    #     """
+    #     all_paths = self.dfs_all(start, end)
+    #     shortest = 0
+    #     for i in range(len(all_paths)):
+    #         if len(all_paths[i]) > shortest:
+    #             all_paths.pop(i)
+    #         else:
+    #             shortest = len(all_paths[i])
+    #     return all_paths
 
 
+    def get_edges(self, triangle):
+        edge_one = Edge(triangle[0], triangle[1])
+        edge_two = Edge(triangle[1], triangle[2])
+        edge_three = Edge(triangle[2], triangle[0])
+        return edge_one, edge_two, edge_three
+
+
+    def add_to_path(self, paths, triangle, last_node):
+        for path in paths:
+            if path[-1] == last_node:
+                new_path = path
+                new_path.append(triangle)
+                paths.append(new_path)
+
+
+    def remove_path_with_last_node(self, paths, last_node):
+        for path in paths:
+            if path[-1] == last_node:
+                paths.remove(path)
+                break
+
+
+    def find_shortest_paths(self, paths, end_triangle):
+        shortest_paths = []
+        for path in paths:
+            if path[-1] == end_triangle:
+                shortest_paths.append(path)
+        return shortest_paths
+
+
+    def shortest_path(self, start_triangle, end_triangle):
+        nodes_queue = Queue()
+        visited_map = {}
+        nodes_queue.put(start_triangle)
+        paths = []
+
+
+        while not nodes_queue.empty():
+            node = nodes_queue.get()
+            visited_map[node] = 1
+            # print("This is the node {} {} {} ".format(node[0].id, node[1].id, node[2].id))
+            if node == end_triangle:
+                break
+
+            edge_one, edge_two, edge_three = self.get_edges(node)
+            triangles_edge_one = self.edge_triangle_map[edge_one]
+            triangles_edge_two = self.edge_triangle_map[edge_two]
+            triangles_edge_three = self.edge_triangle_map[edge_three]
+
+            triangles_to_add = triangles_edge_one | triangles_edge_two | triangles_edge_three
+            triangles_to_add = triangles_to_add - {node}
+
+            for tr in triangles_to_add:
+                print("These are the neighbours for node {} {} {} , {} {} {} ".format(node[0].id, node[1].id, node[2].id, tr[0].id, tr[1].id, tr[2].id))
+
+            for triangle in triangles_to_add:
+
+                if triangle not in visited_map and not self.is_partof_k_plus_one_simplex(triangle, node):
+                    # print("This is the nodes to add to the queue {} {} {} ".format(triangle[0].id, triangle[1].id, triangle[2].id))
+                    nodes_queue.put(triangle)
+
+                    if not paths:
+                        paths.append([node, triangle])
+                    else:
+                        self.add_to_path(paths, triangle, node)
+                        if paths:
+                            self.remove_path_with_last_node(paths, node)
+                        print("This is number of paths {}".format(len(paths)))
+
+        # print("I reached to the end")
+        shortest_paths = self.find_shortest_paths(paths, end_triangle)
+        return shortest_paths
 
     # we need to make a map of the edges to the trianbles they are part of
     # {(2, 3) -> (3, 4, 1) (2, 3, 4)}
@@ -144,14 +223,19 @@ class Simplex(Graph):
     def closeness_centrality(self, triangle):
         shortest_paths_sum = 0
         # paths_file = open("paths.txt", "w")
-        # paths_file.write("This is the node {} {} {}".format(traingle))
+        # paths_file.write("This is the node " + str(triangle[0]) + str(triangle[1]) + str(triangle[2]))
+        print("This is the initial triangle {} {} {} ".format(triangle[0].id, triangle[1].id, triangle[2].id))
         for tr in self.triangles:
-            paths = self.find_shortest_path(triangle, tr)
-            # paths_file.write("These are the lengths of paths " + str(len(paths)))
-            if len(paths):
-                shortest_paths_sum += len(paths[0])
-        paths_file.close()
-        return (1/shortest_paths_sum)
+            if tr != triangle:
+                print("This is the destination {} {} {} ".format(tr[0].id, tr[1].id, tr[2].id))
+                paths = self.shortest_path(triangle, tr)
+                print("This  is the path length {}".format(len(paths)))
+                # paths_file.write("These are the lengths of paths " + str(len(paths)))
+                if len(paths):
+                    shortest_paths_sum += len(paths[0])
+        # paths_file.close()
+        return 1 / shortest_paths_sum if shortest_paths_sum else -1
+
 
 
     def give_me_random_list(self, n):
@@ -177,7 +261,7 @@ class Simplex(Graph):
         for tr_a in self.triangles:
             for tr_b in self.triangles:
                 if tr_a != tr_b:
-                    shortest_paths = self.find_shortest_path(tr_a, tr_b)
+                    shortest_paths = self.shortest_path(tr_a, tr_b)
                     num_of_shortest_paths = len(shortest_paths)
                     triangle_in_path = self.count_triangle_in_path(triangle, shortest_paths)
                     if num_of_shortest_paths:
@@ -280,10 +364,12 @@ simplex, ppi_network = construct_simplices(
         )
 
 simplex.generate_triangles()
-for triangle in simplex.triangles:
+print("Number of triangles {}".format(len(simplex.triangles)))
+# triangles = [(1, 2, 3), (1, 3, 4), (4, 3, 5), (6, 3, 5), (2,3, 6)]
+# for triangle in simplex.triangles:
     #degree_dist = simplex.degree_distribution_centrality(triangle)
-    closeness = simplex.closeness_centrality(triangle)
-    print (closeness)
+    # closeness = simplex.closeness_centrality(triangle)
+    # print (" This is the closness {} ".format(closeness))
 
 
 # print("Printing Neighbours")
