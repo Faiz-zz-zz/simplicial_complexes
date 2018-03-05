@@ -1,5 +1,5 @@
 from collections import defaultdict
-from queue import PriorityQueue
+# from queue import PriorityQueue
 
 
 class Node:
@@ -10,8 +10,15 @@ class Node:
     property of nodes in every case.
     """
     def __init__(self, id, description=None):
+        __slots__ = []
         self.id = id
         self.description = description
+
+    def __eq__(self, other):
+        return other.id == self.id
+
+    def __hash__(self):
+        return hash((self.id, ))
 
 
 class Edge:
@@ -22,6 +29,14 @@ class Edge:
         self.a = a
         self.b = b
         self.weight = weight
+
+
+    def __eq__(self, other):
+        return (not (set([other.a, other.b]) - set([self.a, self.b])))
+
+    def __hash__(self):
+        return hash((self.a.id, self.b.id))
+
 
 
 class Graph:
@@ -76,33 +91,33 @@ class Graph:
         self.adj_matrix = dist_dict
         return self.adj_matrix
 
-    def dijkstra(self, src, dest):
-        dist = {}
-        prev = {}
-        dist[src] = 0
+    # def dijkstra(self, src, dest):
+    #     dist = {}
+    #     prev = {}
+    #     dist[src] = 0
 
-        vertex_hq = PriorityQueue()
-        vertex_hq.put((0, src))
+    #     vertex_hq = PriorityQueue()
+    #     vertex_hq.put((0, src))
 
-        for node in self.nodes:
-            if node != src:
-                dist[node] = float('inf')
-                prev[node] = None
+    #     for node in self.nodes:
+    #         if node != src:
+    #             dist[node] = float('inf')
+    #             prev[node] = None
 
-        while vertex_pq:
-            curr_node = vertex_pq.get()
-            if curr_node == dest:
-                path = [src]
-                while path[-1] != dest:
-                    path.append(prev[path[-1]])
-                return dist[dest], prev
+    #     while vertex_pq:
+    #         curr_node = vertex_pq.get()
+    #         if curr_node == dest:
+    #             path = [src]
+    #             while path[-1] != dest:
+    #                 path.append(prev[path[-1]])
+    #             return dist[dest], prev
 
-            for nb in self.find_neighbours(curr_node):
-                alt_dist = dist[curr_node] + distance_map[(curr_node, nb)]
-                if alt_dist < dist[node]:
-                    dist[nb] = alt_dist
-                    prev[nb] = curr_node
-                    vertex_hq.put((dist[nb], nb))
+    #         for nb in self.find_neighbours(curr_node):
+    #             alt_dist = dist[curr_node] + distance_map[(curr_node, nb)]
+    #             if alt_dist < dist[node]:
+    #                 dist[nb] = alt_dist
+    #                 prev[nb] = curr_node
+    #                 vertex_hq.put((dist[nb], nb))
 
     def find_distance(self, src, dist):
         if self.adj_matrix:
