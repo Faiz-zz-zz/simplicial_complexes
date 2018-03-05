@@ -1,11 +1,10 @@
 import csv
 import json
+import os
 from tqdm import tqdm  # progress bar
-from .filenames import RAW_HUMAN_PPI, RAW_YEAST_PPI, RAW_HUMAN_COMPLEX, \
-    RAW_HUMAN_COMPLEX_JSON, RAW_YEAST_COMPLEX, GENE_ID_CONVERSION
-
-LOCATION = "../raw_data/"
-CLEANED_LOCATION = LOCATION + "cleaned/"
+from filenames import RAW_HUMAN_PPI, RAW_YEAST_PPI, RAW_HUMAN_COMPLEX, \
+    RAW_HUMAN_COMPLEX_JSON, RAW_YEAST_COMPLEX, GENE_ID_CONVERSION, \
+    CLEANED_LOCATION, LOCATION
 
 header = [
     '#BioGRID Interaction ID',
@@ -55,10 +54,15 @@ def clean_human_ppi_data():
         reader = csv.reader(inp)
         writer.writerow(header)
         for row in tqdm(reader):
-            if (row[12] in expSysType)
-            and (row[15] in organism)
-            and (row[16] in organism)
-            and (row[11] in expSystem):
+            if (
+                row[12] in expSysType
+            ) and (
+                row[15] in organism
+            ) and (
+                row[16] in organism
+            ) and (
+                row[11] in expSystem
+            ):
                 writer.writerow(row)
 
 
@@ -71,19 +75,24 @@ def clean_yeast_ppi_data():
         reader = csv.reader(inp)
         writer.writerow(header)
         for row in tqdm(reader):
-            if (row[11] in expSystem)
-            and (row[12] in expSysType)
-            and (row[15] in organism)
-            and (row[16] in organism):
+            if (
+                row[11] in expSystem
+            ) and (
+                row[12] in expSysType
+            ) and (
+                row[15] in organism
+            ) and (
+                row[16] in organism
+            ):
                 writer.writerow(row)
 
 def clean_human_complex_data():
-    data = json.loads(open(LOCATION + RAW_HUMAN_COMPLEX_JSON).read())
+    data = json.loads(open(CLEANED_LOCATION + RAW_HUMAN_COMPLEX_JSON).read())
     valid_complexes = []
     # filters the mouses (non humans)
     for each in data:
         organisms = set(each["SWISSPROT organism"].split(";"))
-        if len(organisms) == 1 and oraganism.pop() == "Homo sapiens (Human)":
+        if len(organisms) == 1 and organisms.pop() == "Homo sapiens (Human)":
             valid_complexes.append(each)
 
 
@@ -96,7 +105,8 @@ def clean_human_complex_data():
         for each in tqdm(valid_complexes):
             genes = each["subunits(Gene name)"].split(";")
             for gene in genes:
-                writer.writerow(gene_to_entrez[gene], each["ComplexName"])
+                if gene in gene_to_entrez:
+                    writer.writerow([gene_to_entrez[gene], each["ComplexName"]])
 
 
 def check_files():

@@ -12,11 +12,11 @@ import os.path
 import requests
 import sys
 
-from .clean_data import clean_data, check_files
+from clean_data import clean_data, check_files
 import simplicialComplexNetwork as scn
 
 
-def verify_download(data_sets):
+def verify_download():
     location = "../raw_data/"
     urls = {
         "human": ("https://storage.googleapis.com/simplicial-complex-dataset"
