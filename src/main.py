@@ -12,8 +12,11 @@ import os.path
 import requests
 import sys
 
+from clean_data import clean_data, check_files
+import simplicialComplexNetwork as scn
 
-def verify_download(data_sets):
+
+def verify_download():
     location = "../raw_data/"
     urls = {
         "human": ("https://storage.googleapis.com/simplicial-complex-dataset"
@@ -22,7 +25,7 @@ def verify_download(data_sets):
                   "/PPI%20Dataset/BIOGRID-Saccharomyces-cerevisiae-"
                   "(bakers_yeast).csv")
     }
-    for data_set in data_sets:
+    for data_set in urls:
         file_name = location + data_set + ".csv"
 
         if os.path.isfile(file_name):
@@ -58,9 +61,22 @@ def getopts(argv):
 
 
 def main(args):
-    data_sets = args["-g"].split(",")
-    verify_download(data_sets)
-    print("\nDownloads verified.")
+    if not check_files():
+        verify_download()
+        print("\nDownloads verified.")
+        print("Files Downloaded.\nCleaning Datasets...")
+        clean_data()
+    # human_ppi, yeast_ppi, human_complex, yeast_complex
+    data_set = args["-d"].split(",")
+    if len(data_set) > 1:
+        raise Exception("Only one data set a time allowed")
+
+    methods = args["-m"].split(",")
+
+    if data_set[-3:] == "ppi":
+        graph.get_metrics(methods, data_set)
+    else:
+        scn.generate_metrics(methods, data_set)
 
 
 if __name__ == '__main__':
