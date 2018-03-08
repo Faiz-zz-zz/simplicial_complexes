@@ -12,7 +12,6 @@ from filenames import RAW_HUMAN_PPI, RAW_YEAST_PPI, RAW_HUMAN_COMPLEX, \
 
 # {(2, 3, 4) (2, 3, 1) (3, 4, 5)}
 # {(2, 3) (2, 4) (2, 5) (3, 1) (3, 5) (3, 2)}
->>>>>>> master
 
 class Simplice(Node):
     def __init__(self, gene_id, complex_name):
