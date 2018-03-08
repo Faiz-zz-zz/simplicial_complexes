@@ -1,9 +1,12 @@
-# import networkx as nx
+import networkx as nx
 import pandas as pd
 from collections import defaultdict
 import itertools
 from graph import Node, Edge, Graph
 from ppiNetwork import create_ppi_network
+from queue import Queue
+from tqdm import tqdm
+import json
 from filenames import RAW_HUMAN_PPI, RAW_YEAST_PPI, RAW_HUMAN_COMPLEX, \
     RAW_HUMAN_COMPLEX_JSON, RAW_YEAST_COMPLEX, CLEANED_LOCATION, GENE_ID_CSV
 
@@ -32,6 +35,7 @@ class Simplex(Graph):
         self.edge_map = {}
         self.generate_edge_map()
         self.generate_triangles()
+        self.model_simplicial_complex_as_binary_network()
 
     def generate_edge_map(self):
         for edge in self.edges:
@@ -76,19 +80,22 @@ class Simplex(Graph):
 
 
     def is_partof_k_plus_one_simplex(self, tr_a, tr_b):
+        # assumed they share an edge
+
         diff_a = set(tr_a) - set(tr_b)
         diff_b = set(tr_b) - set(tr_a)
-        edge_a_b = (diff_a, diff_b)
-        if edge_a_b in self.edge_triangle_map:
-            return True
+        if diff_a and diff_b:
+            edge_a_b = Edge(Node(diff_a.pop()), Node(diff_b.pop()))
+            if edge_a_b in self.edge_triangle_map:
+                return True
         return False
 
 
     def find_upper_adjacent(self, triangle):
         edges = []
-        edges.append((triangle[0], triangle[1]))
-        edges.append((triangle[1],triangle[2]))
-        edges.append((triangle[0],triangle[2]))
+        edges.append(Edge(triangle[0], triangle[1]))
+        edges.append(Edge(triangle[1],triangle[2]))
+        edges.append(Edge(triangle[0],triangle[2]))
 
         num_of_upper_adjacent = 0
         for edge in edges:
@@ -109,6 +116,7 @@ class Simplex(Graph):
             simplex_node, path = list(stack.pop())
             if simplex_node == end:
                 paths.append(path)
+
             _, simplices_connected = self.find_lower_adjacent(simplex_node)
             for adj in (set(simplices_connected) - set(path)):
                 for i in range(len(simplices_connected)):
@@ -117,21 +125,122 @@ class Simplex(Graph):
                         stack.append((adj, path + [adj]))
         return paths
 
-    def find_shortest_path(self, start, end):
-        """
-        Given a 3 tuple start [(a,b,c)] and 3 tuple end [(x,y,z)], and a list of 3 tuples of all 3-simplicies (all_simplicies)
-        This tries to find the shortest path among all the paths returned by the dfs function
-        """
-        all_paths = self.dfs_all(start, end)
-        shortest = 0
-        for i in range(len(all_paths)):
-            if len(all_paths[i]) > shortest:
-                all_paths.pop(i)
-            else:
-                shortest = len(all_paths[i])
-        return all_paths
+
+    # def find_shortest_path(self, start, end):
+    #     """
+    #     Given a 3 tuple start [(a,b,c)] and 3 tuple end [(x,y,z)], and a list of 3 tuples of all 3-simplicies (all_simplicies)
+    #     This tries to find the shortest path among all the paths returned by the dfs function
+    #     """
+    #     all_paths = self.dfs_all(start, end)
+    #     shortest = 0
+    #     for i in range(len(all_paths)):
+    #         if len(all_paths[i]) > shortest:
+    #             all_paths.pop(i)
+    #         else:
+    #             shortest = len(all_paths[i])
+    #     return all_paths
+
+    def create_edges_from_triangles(self, tr_list):
+        for tr1 in tr_list:
+            for tr2 in tr_list:
+                if tr1 != tr2:
+                    node_a = self.triangle_to_id[tr1]
+                    node_b = self.triangle_to_id[tr2]
+                    self.binary_network_edges.append((node_a, node_b))
+
+    def map_triangles_to_ids(self):
+        num_of_triangles = len(self.triangles)
+        self.triangle_to_id = {}
+        self.id_to_triangle = {}
+        triangles_list = list(self.triangles)
+        for i in range(num_of_triangles):
+            self.triangle_to_id[triangles_list[i]] = i
+            self.id_to_triangle[i] = triangles_list[i]
+
+    def model_simplicial_complex_as_binary_network(self):
+        self.binary_network_nodes = list(range(0, len(self.triangles)))
+        self.binary_network_edges = []
+        self.binary_network_model = nx.Graph()
+        self.map_triangles_to_ids()
+        for edge, tr_list in self.edge_triangle_map.items():
+            self.create_edges_from_triangles(tr_list)
+
+        self.binary_network_model.add_nodes_from(self.binary_network_nodes)
+        self.binary_network_model.add_edges_from(self.binary_network_edges)
 
 
+    def get_edges(self, triangle):
+        edge_one = Edge(triangle[0], triangle[1])
+        edge_two = Edge(triangle[1], triangle[2])
+        edge_three = Edge(triangle[2], triangle[0])
+        return edge_one, edge_two, edge_three
+
+
+    def add_to_path(self, paths, triangle, last_node):
+        for path in paths:
+            if path[-1] == last_node:
+                new_path = path
+                new_path.append(triangle)
+                paths.append(new_path)
+
+
+    def remove_path_with_last_node(self, paths, last_node):
+        for path in paths:
+            if path[-1] == last_node:
+                paths.remove(path)
+                break
+
+
+    def find_shortest_paths(self, paths, end_triangle):
+        shortest_paths = []
+        for path in paths:
+            if path[-1] == end_triangle:
+                shortest_paths.append(path)
+        return shortest_paths
+
+
+    def shortest_path(self, start_triangle, end_triangle):
+        nodes_queue = Queue()
+        visited_map = {}
+        nodes_queue.put(start_triangle)
+        paths = []
+
+
+        while not nodes_queue.empty():
+            node = nodes_queue.get()
+            visited_map[node] = 1
+            # print("This is the node {} {} {} ".format(node[0].id, node[1].id, node[2].id))
+            if node == end_triangle:
+                break
+
+            edge_one, edge_two, edge_three = self.get_edges(node)
+            triangles_edge_one = self.edge_triangle_map[edge_one]
+            triangles_edge_two = self.edge_triangle_map[edge_two]
+            triangles_edge_three = self.edge_triangle_map[edge_three]
+
+            triangles_to_add = triangles_edge_one | triangles_edge_two | triangles_edge_three
+            triangles_to_add = triangles_to_add - {node}
+
+            for tr in triangles_to_add:
+                print("These are the neighbours for node {} {} {} , {} {} {} ".format(node[0].id, node[1].id, node[2].id, tr[0].id, tr[1].id, tr[2].id))
+
+            for triangle in triangles_to_add:
+
+                if triangle not in visited_map and not self.is_partof_k_plus_one_simplex(triangle, node):
+                    # print("This is the nodes to add to the queue {} {} {} ".format(triangle[0].id, triangle[1].id, triangle[2].id))
+                    nodes_queue.put(triangle)
+
+                    if not paths:
+                        paths.append([node, triangle])
+                    else:
+                        self.add_to_path(paths, triangle, node)
+                        if paths:
+                            self.remove_path_with_last_node(paths, node)
+                        print("This is number of paths {}".format(len(paths)))
+
+        # print("I reached to the end")
+        shortest_paths = self.find_shortest_paths(paths, end_triangle)
+        return shortest_paths
 
     # we need to make a map of the edges to the trianbles they are part of
     # {(2, 3) -> (3, 4, 1) (2, 3, 4)}
@@ -145,46 +254,100 @@ class Simplex(Graph):
     # This is implemented according to definition 15 in the paper
     def closeness_centrality(self, triangle):
         shortest_paths_sum = 0
-        # paths_file = open("paths.txt", "w")
-        # paths_file.write("This is the node {} {} {}".format(traingle))
         for tr in self.triangles:
-            paths = self.find_shortest_path(triangle, tr)
-            # paths_file.write("These are the lengths of paths " + str(len(paths)))
-            if len(paths):
-                shortest_paths_sum += len(paths[0])
-        paths_file.close()
-        return (1/shortest_paths_sum)
-
-
-    def give_me_random_list(self, n):
-        from random import choice
-        if n < len(self.triangles): return self.triangles
-        ret = set()
-        while (len(ret)) < n:
-            _item = random.choice(self.triangles)
-            ret.add(_item)
-        return ret
+            if tr != triangle:
+                source = self.triangle_to_id[triangle]
+                dest = self.triangle_to_id[tr]
+                paths = []
+                try:
+                    for p in nx.all_shortest_paths(self.binary_network_model, source, dest):
+                        paths.append(p)
+                except:
+                    continue
+                if len(paths):
+                    shortest_paths_sum += len(paths[0])
+        return 1 / shortest_paths_sum if shortest_paths_sum else print("shortest path sum is zero")
 
 
     def count_triangle_in_path(self, triangle, paths):
         in_path = 0
         for path in paths:
-            if triangle in paths:
+            if triangle in path:
                 in_path += 1
         return in_path
 
 
     def betweenness_centrality(self, triangle):
         betweenness = 0
+        print("This is the node to find betweenness {}".format(self.triangle_to_id[triangle]))
         for tr_a in self.triangles:
             for tr_b in self.triangles:
                 if tr_a != tr_b:
-                    shortest_paths = self.find_shortest_path(tr_a, tr_b)
+                    source = self.triangle_to_id[tr_a]
+                    dest = self.triangle_to_id[tr_b]
+                    shortest_paths = []
+                    try:
+                        for p in nx.all_shortest_paths(self.binary_network_model, source, dest):
+                            # print("This is the path {}".format(p))
+                            shortest_paths.append(p)
+                    except:
+                        continue
+                    # shortest_paths = self.shortest_path(tr_a, tr_b)
                     num_of_shortest_paths = len(shortest_paths)
-                    triangle_in_path = self.count_triangle_in_path(triangle, shortest_paths)
+                    # print("this is the num of paths {}".format(len(num_of_shortest_paths)))
+                    triangle_in_path = self.count_triangle_in_path(self.triangle_to_id[triangle], shortest_paths)
+                    # print("this is the number of paths triangle exist in {}".format(triangle_in_path))
                     if num_of_shortest_paths:
-                        betweenness += triangle_in_path/num_of_shortest_paths
-        return betweenness
+                        betweenness += (triangle_in_path/num_of_shortest_paths)
+                        print("This is betweenness until now {}".format(betweenness))
+
+        return betweenness/(((len(self.triangles)-1)*(len(self.triangles)-2))/2)
+
+
+
+    def write_to_file_degree_centralities(self):
+        degree_dict = nx.degree_centrality(self.binary_network_model)
+        degree_centralities = {}
+        data = []
+        for key, value in degree_dict.items():
+            # print("this is for node {} {} {}".format(str(triangle[0].id), str(triangle[1].id), str(triangle[2].id)))
+            triangle = self.id_to_triangle[key]
+            print("this is for node {} {} {}".format(str(triangle[0].id), str(triangle[1].id), str(triangle[2].id)))
+            data.append({"nodes":[str(triangle[0].id), str(triangle[1].id), str(triangle[2].id)], "degree_centrality": value})
+
+        with open('degree_centrality.json', 'w') as outfile:
+            #json.dumps(closeness_centralities)
+            json.dump(data, outfile)
+
+    def write_to_file_closeness_centralities(self):
+        closeness_dict = nx.closeness_centrality(self.binary_network_model)
+        closeness_centralities = {}
+        data = []
+        for key, value in closeness_dict.items():
+            # print("this is for node {} {} {}".format(str(triangle[0].id), str(triangle[1].id), str(triangle[2].id)))
+            triangle = self.id_to_triangle[key]
+            data.append({"nodes":[str(triangle[0].id), str(triangle[1].id), str(triangle[2].id)], "closeness_centrality": value})
+
+        with open('closeness_centrality.json', 'w') as outfile:
+            #json.dumps(closeness_centralities)
+            json.dump(data, outfile)
+
+
+    def write_to_file_betweenness_centralities(self):
+        betweenness_dict = nx.betweenness_centrality(self.binary_network_model)
+        betweenness_centralities = {}
+        data = []
+        for key, value in betweenness_dict.items():
+            triangle = self.id_to_triangle[key]
+            data.append({"nodes":[str(triangle[0].id), str(triangle[1].id), str(triangle[2].id)], "betweenness_centrality": value})
+
+
+        # print("length of data for betweenness is  {}".format(len(data)))
+        # print("length of dic for betweenness is  {}".format(len(betweenness_dict)))
+        with open('betweenness_centrality.json', 'w') as outfile:
+            #json.dumps(closeness_centralities)
+            json.dump(data, outfile)
+
 
     def closeness_centrality_all(self):
         for triangle in self.traingles:
@@ -292,12 +455,6 @@ def construct_simplices(
 #             '../raw_data/CYC2008_complex_v2.csv',
 #             'Saccharomyces cerevisiae S288C'
 #         )
-
-# simplex.generate_triangles()
-# for triangle in simplex.triangles:
-#     #degree_dist = simplex.degree_distribution_centrality(triangle)
-#     closeness = simplex.closeness_centrality(triangle)
-#     print (closeness)
 
 
 def generate_metrics(methods, data_set):
