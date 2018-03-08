@@ -7,6 +7,12 @@ from ppiNetwork import create_ppi_network
 from queue import Queue
 from tqdm import tqdm
 import json
+from filenames import RAW_HUMAN_PPI, RAW_YEAST_PPI, RAW_HUMAN_COMPLEX, \
+    RAW_HUMAN_COMPLEX_JSON, RAW_YEAST_COMPLEX, CLEANED_LOCATION, GENE_ID_CSV
+
+# {(2, 3, 4) (2, 3, 1) (3, 4, 5)}
+# {(2, 3) (2, 4) (2, 5) (3, 1) (3, 5) (3, 2)}
+>>>>>>> master
 
 class Simplice(Node):
     def __init__(self, gene_id, complex_name):
@@ -344,6 +350,18 @@ class Simplex(Graph):
             json.dump(data, outfile)
 
 
+    def closeness_centrality_all(self):
+        for triangle in self.traingles:
+            self.closeness_centrality(traingle)
+
+    def degree_distribution_centrality_all(self):
+        for triangle in self.triangles:
+            self.degree_distribution_centrality(triangle)
+
+    def closeness_centrality_all(self):
+        for triangle in self.triangles:
+            self.closeness_centrality(triangle)
+
 def print_degree(g):
     nodes_list = g.nodes()
     for node in nodes_list:
@@ -433,29 +451,31 @@ def construct_simplices(
     return simplex, ppi_network
 
 
-simplex, ppi_network = construct_simplices(
-            '../raw_data/gene_ids.csv',
-            '../raw_data/CYC2008_complex_v2.csv',
+# simplex, ppi_network = construct_simplices(
+#             '../raw_data/gene_ids.csv',
+#             '../raw_data/CYC2008_complex_v2.csv',
+#             'Saccharomyces cerevisiae S288C'
+#         )
+
+
+def generate_metrics(methods, data_set):
+    simplex, ppi_network = None, None
+    if data_set == "yeast_complex":
+        simplex, ppi_network = construct_simplices(
+            CLEANED_LOCATION + GENE_ID_CSV,
+            CLEANED_LOCATION + RAW_YEAST_COMPLEX,
             'Saccharomyces cerevisiae S288C'
         )
+    else:
+        # Make human
+        pass
 
+    available_methods = {
+        "betweenness": simplex.betweenness_centrality_all(),
+        "closeness": simplex.closeness_centrality_all(),
+        "degree": simplex.degree_distribution_centrality_all()
+    }
 
-#print("Number of triangles {}".format(len(simplex.triangles)))
-# triangles = [(1, 2, 3), (1, 3, 4), (4, 3, 5), (6, 3, 5), (2,3, 6)]
-
-#simplex.write_to_file_betweenness_centralities()
-#simplex.write_to_file_degree_centralities()
-simplex.write_to_file_closeness_centralities()
-    #degree_dist = simplex.degree_distribution_centrality(triangle)
-    #closeness = simplex.closeness_centrality(triangle)
-    #betweenness = simplex.betweenness_centrality(triangle)
-    #print (" This is the betweenness {} ".format(closeness))
-
-
-# print("Printing Neighbours")
-
-# for node in ppi_network.nodes:
-#     print("Current node is :{}".format(node.id))
-#     print(list(map(lambda k: k.id, ppi_network.find_neighbours(node))))
-#     print("\n======\n")
-
+    for method in methods:
+        if method in available_methods:
+            available_methods[method]()
