@@ -70,7 +70,7 @@ def get_closenessCentrality(NXGraph):
     closenessCentrality = nx.closeness_centrality(NXGraph)
     sum=0
     for k, v in closenessCentrality.items():
-        # print("Node: {} => Degree Centrality: {}".format(k, v))
+        # print("Node: {} => Closeness Centrality: {}".format(k, v))
         sum+=v
     # print("Average Degree Centrality: {}".format(sum/float(len(degreeCentrality))))
     closenessCentrality=convertDictToNativeType(closenessCentrality)
