@@ -48,18 +48,13 @@ def generate_measure_matrix():
     matrix, gene_list = generate_matrix()
     gene_measure = parse_json(COMPLEX_CLOSENESS)
     gene_measure_list = []
-    tot = 0
-    got = 0
+
     for gene in gene_list:
         try:
-            print(gene, gene in gene_id_converter)
             gene_measure_list.append(gene_measure[gene_id_converter[str(gene)]])
-            got += 1
-            tot += 1
+
         except:
             gene_measure_list.append(0)  # me sorry
-            tot += 1
-    print("Percentage = {} {} {}".format(got/tot, got, tot))
     return matrix, gene_measure_list
 
 
