@@ -23,11 +23,9 @@ def get_actual_map():
     for d in data:
         try:
             m[d[0]] = d[1]
-        except:
+        except Exception:
             pass
     return m
-
-
 
 
 def parse_json(measure):
@@ -38,21 +36,20 @@ def parse_json(measure):
             measure_map[node].append(dp[name_map[measure]])
 
     measure_map = dict(list(map(lambda k: (k[0], max(k[1])), list(measure_map.items()))))
-    print(measure_map)
     return measure_map
 
 
 def generate_measure_matrix():
     gene_id_converter = get_actual_map()
-    # gene_id_converter = dict(zip(gene_id_converter.values(), gene_id_converter.keys()))
     matrix, gene_list = generate_matrix()
     gene_measure = parse_json(COMPLEX_CLOSENESS)
     gene_measure_list = []
-
     for gene in gene_list:
         try:
-            gene_measure_list.append(gene_measure[gene_id_converter[str(gene)]])
-
+            if gene not in gene_id_converter:
+                print(gene, " not found!")
+            else:
+                gene_measure_list.append(gene_measure[gene_id_converter[str(gene)]])
         except:
             gene_measure_list.append(0)  # me sorry
     return matrix, gene_measure_list
@@ -63,6 +60,9 @@ def calculate_regression():
     go_measures = matrix[0]
     # print(len(go_measures), len(measures), "SUP SUP SUP")
     slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(np.asarray(measures), go_measures)
-    print("Coefficient of determination: {}", r_value ** 2)
+    print("Coefficient of determination: {}".format(r_value ** 2))
 
-calculate_regression()
+# calculate_regression()
+a = parse_json(COMPLEX_CLOSENESS)
+for k in a.keys():
+    print(k)

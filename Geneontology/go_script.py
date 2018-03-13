@@ -78,5 +78,8 @@ def generate_matrix():
     return matrix, annotation_map_keys
 
 # convert_to_csv()
-# mapping()
-generate_matrix()
+# # mapping()
+# _ , a = generate_matrix()
+#
+# for k in a:
+#     print(k)
