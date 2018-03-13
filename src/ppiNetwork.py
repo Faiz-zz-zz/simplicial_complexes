@@ -1,5 +1,4 @@
 import pandas as pd
-import community
 import graph as graph
 from graph import Node
 from graph import Edge
