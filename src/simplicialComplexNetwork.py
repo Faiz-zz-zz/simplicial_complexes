@@ -465,6 +465,7 @@ def generate_metrics(methods, data_set):
             CLEANED_LOCATION + RAW_YEAST_COMPLEX,
             'Saccharomyces cerevisiae S288C'
         )
+        print("number of nodes: {}".format(len(ppi_network.nodes)))
     else:
         # Make human
         pass
