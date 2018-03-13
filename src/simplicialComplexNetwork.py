@@ -7,7 +7,6 @@ from ppiNetwork import create_ppi_network
 from queue import Queue
 from tqdm import tqdm
 import json
-import pdb
 from filenames import RAW_HUMAN_PPI, RAW_YEAST_PPI, RAW_HUMAN_COMPLEX, \
     RAW_HUMAN_COMPLEX_JSON, RAW_YEAST_COMPLEX, CLEANED_LOCATION, GENE_ID_CSV, LOCATION
 
