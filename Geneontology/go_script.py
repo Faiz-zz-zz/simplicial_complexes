@@ -76,7 +76,3 @@ def generate_matrix():
                 matrix[i][j] = 1
 
     return matrix, annotation_map_keys
-
-# convert_to_csv()
-# mapping()
-generate_matrix()

@@ -49,7 +49,7 @@ def clean_human_ppi_data():
     organism = ['9606']
     with open(
         LOCATION + RAW_HUMAN_PPI, 'r') as inp, open(
-            CLEANED_LOCATION + RAW_HUMAN_COMPLEX, 'w', newline='') as out:
+            CLEANED_LOCATION + RAW_HUMAN_PPI, 'w', newline='') as out:
         writer = csv.writer(out)
         reader = csv.reader(inp)
         writer.writerow(header)

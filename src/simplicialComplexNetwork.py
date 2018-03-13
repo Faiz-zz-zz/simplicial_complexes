@@ -476,6 +476,7 @@ def generate_metrics(methods, data_set):
             CLEANED_LOCATION + GENE_ID_CSV,
             'Saccharomyces cerevisiae S288C'
         )
+        print("number of nodes: {}".format(len(ppi_network.nodes)))
     else:
         simplex, ppi_network = construct_simplices(
             LOCATION + RAW_HUMAN_PPI,
