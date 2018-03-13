@@ -7,6 +7,7 @@ from ppiNetwork import create_ppi_network
 from queue import Queue
 from tqdm import tqdm
 import json
+import pdb
 from filenames import RAW_HUMAN_PPI, RAW_YEAST_PPI, RAW_HUMAN_COMPLEX, \
     RAW_HUMAN_COMPLEX_JSON, RAW_YEAST_COMPLEX, CLEANED_LOCATION, GENE_ID_CSV, LOCATION
 
@@ -48,7 +49,7 @@ class Simplex(Graph):
 
     def generate_triangles(self):
         triangles = set()
-        for node in self.nodes:
+        for i, node in enumerate(self.nodes):
             neighbours = self.find_neighbours(node)
             for (a, b) in itertools.product(neighbours, neighbours):
                 if a == b: continue
@@ -364,6 +365,13 @@ class Simplex(Graph):
         #     self.closeness_centrality(triangle)
         self.write_to_file_degree_centralities()
 
+    def get_both(self):
+        self.closeness_centrality_all()
+        self.degree_distribution_centrality_all()
+        self.betweenness_centrality_all()
+
+
+
 def print_degree(g):
     nodes_list = g.nodes()
     for node in nodes_list:
@@ -420,7 +428,8 @@ def group_by_complexes(simplices):
 def construct_complex(grouped_simplices, ppi_network):
     simplice_edges = []
     simplice_nodes = []
-    for simplices in grouped_simplices:
+    for i, simplices in enumerate(grouped_simplices):
+        print("{}/{}".format(i, len(grouped_simplices)))
         simplice_nodes.extend(simplices)
         for node_a in simplices:
             for node_b in simplices:
@@ -431,18 +440,17 @@ def construct_complex(grouped_simplices, ppi_network):
     for edge in simplex.edges:
         if Edge(edge.a, edge.b) not in ppi_network.edges:
             ppi_network.edges.add(Edge(edge.a, edge.b))
-
+    print("Finished yo")
     return simplex
 
 # Constructing the simplices from the complexes data
 def construct_simplices(
         ppi_network_path,
-        complexes_file_path, 
+        complexes_file_path,
         gene_conversion_file_path,
         species):
-    
-    simplices = []
 
+    simplices = []
     if species == 'Saccharomyces cerevisiae S288C':
         from_to_ids, gene_names = get_gene_conversion_info(
                                     gene_conversion_file_path,
@@ -489,7 +497,8 @@ def generate_metrics(methods, data_set):
     available_methods = {
         "betweenness": simplex.betweenness_centrality_all,
         "closeness": simplex.closeness_centrality_all,
-        "degree": simplex.degree_distribution_centrality_all
+        "degree": simplex.degree_distribution_centrality_all,
+        "get_both": simplex.get_both
     }
 
     for method in methods:

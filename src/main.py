@@ -65,7 +65,7 @@ def main(args):
         verify_download()
         print("\nDownloads verified.")
         print("Files Downloaded.\nCleaning Datasets...")
-        clean_data()
+    clean_data()
     # human_ppi, yeast_ppi, human_complex, yeast_complex
     data_set = args["-d"].split(",")
     if len(data_set) > 1:
