@@ -77,8 +77,8 @@ def generate_matrix(gene_type):
     # matrix = [[0 for x in range(w)] for y in range(h)]
     matrix = numpy.zeros((w,h))
 
-    for i in range(0, w):
-        for j in range(0, h):
+    for i in range(0, h):
+        for j in range(0, w):
             # get the list of annotations from each gene
             values = annotation_map[annotation_map_keys[i]]
             # if the popular GO:ID matches any of the annotations associated with a gene
@@ -88,4 +88,5 @@ def generate_matrix(gene_type):
     print(matrix)
 
 # convert_to_csv()
+generate_matrix("yeast")
 generate_matrix("human")
