@@ -8,7 +8,7 @@ from queue import Queue
 from tqdm import tqdm
 import json
 from filenames import RAW_HUMAN_PPI, RAW_YEAST_PPI, RAW_HUMAN_COMPLEX, \
-    RAW_HUMAN_COMPLEX_JSON, RAW_YEAST_COMPLEX, CLEANED_LOCATION, GENE_ID_CSV
+    RAW_HUMAN_COMPLEX_JSON, RAW_YEAST_COMPLEX, CLEANED_LOCATION, GENE_ID_CSV, LOCATION
 
 # {(2, 3, 4) (2, 3, 1) (3, 4, 5)}
 # {(2, 3) (2, 4) (2, 5) (3, 1) (3, 5) (3, 2)}
@@ -349,17 +349,20 @@ class Simplex(Graph):
             json.dump(data, outfile)
 
 
-    def closeness_centrality_all(self):
-        for triangle in self.traingles:
-            self.closeness_centrality(traingle)
+    def betweenness_centrality_all(self):
+        # for triangle in self.traingles:
+        #     self.betweenness_centrality(triangle)
+        self.write_to_file_betweenness_centralities()
 
     def degree_distribution_centrality_all(self):
-        for triangle in self.triangles:
-            self.degree_distribution_centrality(triangle)
+        # for triangle in self.triangles:
+        #     self.degree_distribution_centrality(triangle)
+        self.write_to_file_closeness_centralities()
 
     def closeness_centrality_all(self):
-        for triangle in self.triangles:
-            self.closeness_centrality(triangle)
+        # for triangle in self.triangles:
+        #     self.closeness_centrality(triangle)
+        self.write_to_file_degree_centralities()
 
 def print_degree(g):
     nodes_list = g.nodes()
@@ -414,27 +417,9 @@ def group_by_complexes(simplices):
     grouped_simplices = complex_groups.values()
     return grouped_simplices
 
-
-# Constructing the simplices from the complexes data
-def construct_simplices(
-        gene_conversion_file_path,
-        complexes_file_path, species):
-    from_to_ids, gene_names = get_gene_conversion_info(
-                                gene_conversion_file_path,
-                                species
-                            )
-    genes, complexes_names = get_complexes_info(complexes_file_path)
-
-    simplices = []
-
-    for g, c in zip(genes, complexes_names):
-        if g in from_to_ids:
-            simplices.append(Simplice(from_to_ids[g], c))
-
-    grouped_simplices = group_by_complexes(simplices)
-    simplice_nodes = []
-    ppi_network = create_ppi_network("../raw_data/yeast.csv")
+def construct_complex(grouped_simplices, ppi_network):
     simplice_edges = []
+    simplice_nodes = []
     for simplices in grouped_simplices:
         simplice_nodes.extend(simplices)
         for node_a in simplices:
@@ -447,32 +432,63 @@ def construct_simplices(
         if Edge(edge.a, edge.b) not in ppi_network.edges:
             ppi_network.edges.add(Edge(edge.a, edge.b))
 
+    return simplex
+
+# Constructing the simplices from the complexes data
+def construct_simplices(
+        ppi_network_path,
+        complexes_file_path, 
+        gene_conversion_file_path,
+        species):
+    
+    simplices = []
+
+    if species == 'Saccharomyces cerevisiae S288C':
+        from_to_ids, gene_names = get_gene_conversion_info(
+                                    gene_conversion_file_path,
+                                    species
+                                )
+        genes, complexes_names = get_complexes_info(complexes_file_path)
+
+        for g, c in zip(genes, complexes_names):
+            if g in from_to_ids:
+                simplices.append(Simplice(from_to_ids[g], c))
+
+    if species == 'human':
+        genes, complexes_names = get_complexes_info(complexes_file_path)
+
+        for g, c in zip(genes, complexes_names):
+            simplices.append(Simplice(g, c))
+
+    grouped_simplices = group_by_complexes(simplices)
+    ppi_network = create_ppi_network(ppi_network_path)
+    simplex = construct_complex(grouped_simplices, ppi_network)
+
     return simplex, ppi_network
-
-
-# simplex, ppi_network = construct_simplices(
-#             '../raw_data/gene_ids.csv',
-#             '../raw_data/CYC2008_complex_v2.csv',
-#             'Saccharomyces cerevisiae S288C'
-#         )
 
 
 def generate_metrics(methods, data_set):
     simplex, ppi_network = None, None
     if data_set == "yeast_complex":
         simplex, ppi_network = construct_simplices(
-            CLEANED_LOCATION + GENE_ID_CSV,
+            CLEANED_LOCATION + RAW_YEAST_PPI,
             CLEANED_LOCATION + RAW_YEAST_COMPLEX,
+            CLEANED_LOCATION + GENE_ID_CSV,
             'Saccharomyces cerevisiae S288C'
         )
     else:
-        # Make human
+        simplex, ppi_network = construct_simplices(
+            LOCATION + RAW_HUMAN_PPI,
+            CLEANED_LOCATION + RAW_HUMAN_COMPLEX,
+            "",
+            'human'
+        )
         pass
 
     available_methods = {
-        "betweenness": simplex.betweenness_centrality_all(),
-        "closeness": simplex.closeness_centrality_all(),
-        "degree": simplex.degree_distribution_centrality_all()
+        "betweenness": simplex.betweenness_centrality_all,
+        "closeness": simplex.closeness_centrality_all,
+        "degree": simplex.degree_distribution_centrality_all
     }
 
     for method in methods:

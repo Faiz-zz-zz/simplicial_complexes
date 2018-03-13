@@ -30,7 +30,7 @@ def verify_download():
 
         if os.path.isfile(file_name):
             print("{}.csv exists, skipping download process.".format(data_set))
-            return
+            continue
 
         with open(file_name, "wb") as f:
             print("Downloading {}".format(file_name))

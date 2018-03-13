@@ -101,7 +101,7 @@ def clean_human_complex_data():
     # create edges | [Gene Entrez ID, Complex Name]
     with open(CLEANED_LOCATION + RAW_HUMAN_COMPLEX, "w") as out:
         writer = csv.writer(out)
-        writer.writerow(["Entrez ID", "Complex Name"])
+        writer.writerow(["Name", "Complex"])
         for each in tqdm(valid_complexes):
             genes = each["subunits(Gene name)"].split(";")
             for gene in genes:
