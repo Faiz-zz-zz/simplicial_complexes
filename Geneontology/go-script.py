@@ -7,17 +7,17 @@ def convert_to_csv():
     with open('sgd_merged.txt') as fin, open('csv_format.csv', 'w') as fout:
         for line in fin:
             fout.write(line.replace('\t', ','))
+    with open('goa_human.txt') as fin, open('human_csv_format.csv', 'w') as fout:
+        for line in fin:
+            fout.write(line.replace('\t', ','))
 
-def delete_column():
-    with open("csv_format.csv","rb") as source:
-        rdr= csv.reader( source )
-        with open("result.csv","wb") as result:
-            wtr= csv.writer( result )
-            for r in rdr:
-                wtr.writerow( (r[0], r[1], r[3], r[4]) )
-
-def mapping():
-    df = pd.read_csv('csv_format.csv', sep='\t')
+def mapping(gene_type):
+    if(gene_type == "yeast"):
+        df = pd.read_csv('yeast_csv_format.csv', sep='\t')
+    elif(gene_type == "human"):
+        df = pd.read_csv('human_csv_format.csv', sep='\t')
+    else:
+        return "error"
     #print(df.columns)
     no_of_rows = df.shape[0]
     gene_df = df['DB_Object_Symbol']
@@ -41,8 +41,13 @@ def mapping():
     # print(gene_df[10], map[gene_df[10]])
     return annotation_map
 
-def generate_matrix():
-    df = pd.read_csv('csv_format.csv', sep='\t')
+def generate_matrix(gene_type):
+    if(gene_type == "yeast"):
+        df = pd.read_csv('yeast_csv_format.csv', sep='\t')
+    elif(gene_type == "human"):
+        df = pd.read_csv('human_csv_format.csv', sep='\t')
+    else:
+        return "error"
     no_of_genes = df.shape[0]
     annotation_df = df['GO ID']
 
@@ -59,7 +64,12 @@ def generate_matrix():
     #go_id_list is the list of our popular GO:IDs
     go_id_list = [x[0] for x in sorted_x]
     no_go_ids = len(sorted_x)
-    annotation_map = mapping()
+    if(gene_type == "yeast"):
+        annotation_map = mapping("yeast")
+    elif(gene_type == "human"):
+        annotation_map = mapping("human")
+    else:
+        return "error"
     annotation_map_keys = list(annotation_map.keys())
 
     w, h = len(annotation_map_keys), no_go_ids;
@@ -74,9 +84,8 @@ def generate_matrix():
             # if the popular GO:ID matches any of the annotations associated with a gene
             if(go_id_list[j] in values or go_id_list[j] == values):
                 matrix[i][j] = 1
-                
+
     print(matrix)
 
 # convert_to_csv()
-# mapping()
-generate_matrix()
+generate_matrix("human")
