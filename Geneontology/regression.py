@@ -1,7 +1,8 @@
 import json
-import scipy as sp
-import scipy.stats
+# import scipy as sp
+# import scipy.stats
 import numpy as np
+from sklearn.model_selection import train_test_split
 from collections import defaultdict
 from filenames import COMPLEX_BETWEENNESS, COMPLEX_CLOSENESS, COMPLEX_DEGREE, \
     GENE_ID_CONVERSION
@@ -41,7 +42,7 @@ def parse_json(measure):
     return data_ppi
 
 
-def generate_measure_matrix(measure):
+def generate_measure_matrix():
     measure_map = {
         "betweenness": COMPLEX_BETWEENNESS,
         "closeness": COMPLEX_CLOSENESS,
@@ -49,14 +50,18 @@ def generate_measure_matrix(measure):
     }
     gene_id_converter = get_actual_map()
     matrix, gene_list = generate_matrix()
-    gene_measure = parse_json(measure_map[measure])
-    gene_measure_list = []
-    for gene in gene_list:
-        try:
-            gene_measure_list.append(gene_measure[gene_id_converter[str(gene)]])
-        except:
-            gene_measure_list.append(0)  # me sorry
-    return matrix, gene_measure_list
+
+    for measure in measure_map:
+        gene_measure = parse_json(measure_map[measure])
+        gene_measure_list = []
+        measure_matrix = []
+        for gene in gene_list:
+            try:
+                gene_measure_list.append(gene_measure[gene_id_converter[str(gene)]])
+            except:
+                gene_measure_list.append(0)  # me sorry
+        measure_matrix.append(gene_measure_list)
+    return matrix, measure_matrix
 
 
 def calculate_regression():
@@ -69,4 +74,11 @@ def calculate_regression():
         print("Coefficient of determination for {}: {}".format(measure, r_value ** 2))
 # calculate_regression()
 
-calculate_regression()
+def predict(genes_list, ):
+    gene_train, gene_test = train_test_split(genes_list, test_size=0.2)
+
+
+
+
+#predict(["m", "a", "d", "g", "h", "b", "n"])
+#calculate_regression()
