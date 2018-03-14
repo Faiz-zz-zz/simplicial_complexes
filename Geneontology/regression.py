@@ -3,6 +3,7 @@ import json
 # import scipy.stats
 import numpy as np
 from sklearn import linear_model
+from sklearn.model_selection import train_test_split
 from collections import defaultdict
 from filenames import COMPLEX_BETWEENNESS, COMPLEX_CLOSENESS, COMPLEX_DEGREE, \
     GENE_ID_CONVERSION
@@ -153,33 +154,30 @@ def remove_all_test_genes(index_list, go_id_to_measure_map):
     return test_data
 
 
-def remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes):
+# def remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes):
 
-    go_id_to_measure_map = []
-    test_gene_data = []
-    index_list = []
-    gene_data = []
+#     go_id_to_measure_map = []
+#     test_gene_data = []
+#     index_list = []
+#     gene_data = []
 
-    for elem in gene_test:
-        index_list.append(gene_list.index(elem))
+#     for elem in gene_test:
+#         index_list.append(gene_list.index(elem))
 
-    for go_id in go_matrix:
-        go_id_to_measure_map = list(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2]))
-        test_data = remove_all_test_genes(index_list, go_id_to_measure_map)
-        test_gene_data.append(test_data)
-        gene_data.append(go_id_to_measure_map)
+#     for go_id in go_matrix:
+#         go_id_to_measure_map = list(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2]))
+#         test_data = remove_all_test_genes(index_list, go_id_to_measure_map)
+#         test_gene_data.append(test_data)
+#         gene_data.append(go_id_to_measure_map)
 
-    return gene_data, test_data
+#     return gene_data, test_data
 
 
 def build_model_input(gene_data):
-    model_input = []
-    for go_id in gene_data:
-        ret = []
-        for i in range(4):
-            ret.append(list(map(lambda k: k[i], go_id)))
-        model_input.append(ret)
-    return model_input
+    data = []
+    for i in range(4):
+        data.append(list(map(lambda k: k[i], gene_data)))
+    return data
 
 def build_prediction_data(idx, test_data):
     go_id_data = test_data.index(idx)
@@ -188,25 +186,22 @@ def build_prediction_data(idx, test_data):
 
 def predict():
     go_matrix, measure_matrix, go_ids, gene_list = generate_measure_matrix()
-
-    train_data, test_data = remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes)
-    train_data_genes, test_data_genes = train_test_split(gene_list, test_size=0.2)
     predictions = {}
     for ind, go_id in enumerate(go_matrix):
-        train_data, test_data = train_test_split(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2]))
+        train_data, test_data = train_test_split(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2]), test_size=0.2)
         input_data = build_model_input(train_data)
         pred_data = build_model_input(test_data)
         models = get_model(input_data)
         go_id_models_pred = {}
         for model in models:
-            centralities = model[1]
+            model, centralities = model
             model_cent_pred = []
             pred_input = []
             for c in centralities:
                 pred_input.append(pred_data[c + 1])
             pred_input = np.asarray(pred_input).T
-            pred = model[0].predict(pred_input)
-            go_id_models_pred[tuple(centralities)] = {"prediction": pred, "rms": model[0].score(pred_input, pred_data[0])}
+            pred = model.predict(pred_input)
+            go_id_models_pred[tuple(centralities)] = {"prediction": pred, "rms": model.score(pred_input, pred_data[0])}
         predictions[go_ids[ind]] = go_id_models_pred
                 
     return predictions
