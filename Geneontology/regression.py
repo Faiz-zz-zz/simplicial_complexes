@@ -113,8 +113,8 @@ def get_model(train_data):
         X = np.asarray(X).T
         clf = linear_model.LinearRegression()
         clf.fit(X, Y)
-        models.append(clf)
-    return models
+        models.append((clf, input_nums))
+    return models, 
 
 # def get_train_test_matrix(gene_test, gene_list, go_matrix, measure_matrix):
 #     index_list = []
@@ -146,13 +146,17 @@ def zip_measure_with_go(measure_matrix, go_matrix):
     return list_measure_go
 
 def remove_all_test_genes(index_list, go_id_to_measure_map):
+    test_data = []
     for idx in index_list:
+        test_data.append(go_id_to_measure_map[idx])
         go_id_to_measure_map.remove(idx)
+    return test_data
+
 
 def remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes):
 
     go_id_to_measure_map = []
-    # test_gene_data = []
+    test_gene_data = []
     index_list = []
     gene_data = []
 
@@ -161,10 +165,11 @@ def remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes
 
     for go_id in go_matrix:
         go_id_to_measure_map = list(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2]))
-        remove_all_test_genes(index_list, go_id_to_measure_map)
+        test_data = remove_all_test_genes(index_list, go_id_to_measure_map)
+        test_gene_data.append(test_data)
         gene_data.append(go_id_to_measure_map)
 
-    return gene_data
+    return gene_data, test_data
 
 
 def build_model_input(gene_data):
@@ -176,26 +181,35 @@ def build_model_input(gene_data):
         model_input.append(ret)
     return model_input
 
+def build_prediction_data(idx, test_data):
+    go_id_data = test_data.index(idx)
+    prediction_data = build_model_input(go_id_data)
+    return prediction_data
+
 def predict():
     go_matrix, measure_matrix, go_ids, gene_list = generate_measure_matrix()
+
+    train_data, test_data = remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes)
     train_data_genes, test_data_genes = train_test_split(gene_list, test_size=0.2)
-    genes_data = remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes)
+    predictions = {}
+    for ind, go_id in enumerate(go_matrix):
+        train_data, test_data = train_test_split(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2]))
+        input_data = build_model_input(train_data)
+        pred_data = build_model_input(test_data)
+        models = get_model(input_data)
+        go_id_models_pred = {}
+        for model in models:
+            centralities = model[1]
+            model_cent_pred = []
+            pred_input = []
+            for c in centralities:
+                pred_input.append(pred_data[c + 1])
+            pred_input = np.asarray(pred_input).T
+            pred = model[0].predict(pred_input)
+            go_id_models_pred[tuple(centralities)] = {"prediction": pred, "rms": model[0].score(pred_input, pred_data[0])}
+        predictions[go_ids[ind]] = go_id_models_pred
+                
+    return predictions
 
-    model_input = build_model_input(genes_data)
-
-    models_for_each_go_id = []
-    for data in model_input:
-        models = get_model(data)
-        models_for_each_go_id.append(models)
 
 
-
-    # list_measure_go = zip_measure_with_go(measure_matrix, go_matrix)
-
-
-
-
-
-
-#predict(["m", "a", "d", "g", "h", "b", "n"])
-#calculate_regression()
