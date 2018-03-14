@@ -35,13 +35,21 @@ def parse_json(measure):
             measure_map[node].append(dp[name_map[measure]])
 
     measure_map = dict(list(map(lambda k: (k[0], max(k[1])), list(measure_map.items()))))
-    return measure_map
+    data_ppi = json.loads(open(measure.replace(".json", "_PPI.json")).read())
+    for data in measure_map:
+        data_ppi[data] = measure_map[data]
+    return data_ppi
 
 
-def generate_measure_matrix():
+def generate_measure_matrix(measure):
+    measure_map = {
+        "betweenness": COMPLEX_BETWEENNESS,
+        "closeness": COMPLEX_CLOSENESS,
+        "degree": COMPLEX_DEGREE
+    }
     gene_id_converter = get_actual_map()
     matrix, gene_list = generate_matrix()
-    gene_measure = parse_json(COMPLEX_CLOSENESS)
+    gene_measure = parse_json(measure_map[measure])
     gene_measure_list = []
     for gene in gene_list:
         try:
@@ -52,23 +60,13 @@ def generate_measure_matrix():
 
 
 def calculate_regression():
-    matrix, measures = generate_measure_matrix()
-    go_measures = matrix[0]
-    # print(len(go_measures), len(measures), "SUP SUP SUP")
-    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(np.asarray(measures), go_measures)
-    print("Coefficient of determination: {}".format(r_value ** 2))
+    measures = ["betweenness", "closeness", "degree"]
+    for measure in measures:
+        matrix, measures = generate_measure_matrix(measure)
+        go_measures = matrix[0]
+        # print(len(go_measures), len(measures), "SUP SUP SUP")
+        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(np.asarray(measures), go_measures)
+        print("Coefficient of determination for {}: {}".format(measure, r_value ** 2))
 # calculate_regression()
 
-def what():
-    gene_list_ = parse_json(COMPLEX_CLOSENESS).keys()
-    print(len(gene_list_))
-    gene_list = set()
-    gene_id_converter = get_actual_map()
-    gene_id_converter = dict(zip(gene_id_converter.values(), gene_id_converter.keys()))
-    for a in gene_list_:
-        if a in gene_id_converter:
-            gene_list.add(gene_id_converter[a])
-    convertor_list = set((get_actual_map().keys()))
-    print(set(gene_list) & convertor_list, len(set(gene_list) & convertor_list))
-
-what()
+calculate_regression()
