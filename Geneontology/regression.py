@@ -8,12 +8,18 @@ from filenames import COMPLEX_BETWEENNESS, COMPLEX_CLOSENESS, COMPLEX_DEGREE, \
     GENE_ID_CONVERSION
 from go_script import generate_matrix
 
+measures = ["betweenness", "closeness", "degree"]
 
 name_map = {
     COMPLEX_BETWEENNESS: "betweenness_centrality",
     COMPLEX_CLOSENESS: "closeness_centrality",
     COMPLEX_DEGREE: "degree_centrality"
 }
+
+
+def powerset(iterable):
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
 
 def get_actual_map():
@@ -65,17 +71,22 @@ def generate_measure_matrix():
 
 
 def calculate_regression():
-    measures = ["betweenness", "closeness", "degree"]
     for measure in measures:
-        matrix, measures = generate_measure_matrix(measure)
+        matrix, measures_list = generate_measure_matrix(measure)
         go_measures = matrix[0]
         # print(len(go_measures), len(measures), "SUP SUP SUP")
-        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(np.asarray(measures), go_measures)
+        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(np.asarray(measures_list), go_measures)
         print("Coefficient of determination for {}: {}".format(measure, r_value ** 2))
-# calculate_regression()
 
-def predict(genes_list, ):
-    gene_train, gene_test = train_test_split(genes_list, test_size=0.2)
+
+def calculate_multifit():
+    measures = ["betweenness", "closeness", "degree"]
+    measure_combs = power_set(measures)
+    matrix, measure_dict = generate_measure_matrix()
+    for measure_comb in measure_combs:
+        print("Calculating coeff for {}:".format(" and ".join(measure_comb)))
+
+
 
 
 
