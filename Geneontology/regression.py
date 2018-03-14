@@ -100,6 +100,20 @@ def calculate_multifit():
         clf.fit(X, Y)
         print("Coeff is: {}".format(clf.score(X, Y)))
 
+def get_model(train_data):
+    measure_combs = powerset([0, 1, 2])
+    Y, *centralities = train_data
+    models = []
+    for input_nums in measure_combs:
+        X = []
+        for i in input_nums:
+            X.append(centralities[i])
+        X = np.asarray(X).T
+        clf = linear_model.LinearRegression()
+        clf.fit(X, Y)
+        models.append(clf)
+    return models
+
 calculate_multifit()
 
 
