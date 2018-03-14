@@ -2,11 +2,13 @@ import json
 # import scipy as sp
 # import scipy.stats
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn import linear_model
 from collections import defaultdict
 from filenames import COMPLEX_BETWEENNESS, COMPLEX_CLOSENESS, COMPLEX_DEGREE, \
     GENE_ID_CONVERSION
 from go_script import generate_matrix
+from itertools import chain
+from itertools import combinations
 
 measures = ["betweenness", "closeness", "degree"]
 
@@ -19,7 +21,7 @@ name_map = {
 
 def powerset(iterable):
     s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+    return chain.from_iterable(combinations(s, r) for r in range(1, len(s)+1))
 
 
 def get_actual_map():
@@ -55,19 +57,19 @@ def generate_measure_matrix():
         "degree": COMPLEX_DEGREE
     }
     gene_id_converter = get_actual_map()
-    matrix, gene_list = generate_matrix()
+    matrix, gene_list, go_ids = generate_matrix()
 
+    measure_matrix = []
     for measure in measure_map:
         gene_measure = parse_json(measure_map[measure])
         gene_measure_list = []
-        measure_matrix = []
         for gene in gene_list:
             try:
                 gene_measure_list.append(gene_measure[gene_id_converter[str(gene)]])
             except:
                 gene_measure_list.append(0)  # me sorry
         measure_matrix.append(gene_measure_list)
-    return matrix, measure_matrix
+    return matrix, measure_matrix, go_ids
 
 
 def calculate_regression():
@@ -81,10 +83,24 @@ def calculate_regression():
 
 def calculate_multifit():
     measures = ["betweenness", "closeness", "degree"]
-    measure_combs = power_set(measures)
-    matrix, measure_dict = generate_measure_matrix()
+    measure_combs = powerset(measures)
+    matrix, measure_list, _ = generate_measure_matrix()
+    measure_dict = {}
+    for i, measure in enumerate(measures):
+        measure_dict[measure] = measure_list[i]
+
     for measure_comb in measure_combs:
         print("Calculating coeff for {}:".format(" and ".join(measure_comb)))
+        X = []
+        for measure in measure_comb:
+            X.append(measure_dict[measure])
+        X = np.asarray(X).T
+        Y = matrix[0]
+        clf = linear_model.LinearRegression()
+        clf.fit(X, Y)
+        print("Coeff is: {}".format(clf.score(X, Y)))
+
+calculate_multifit()
 
 
 

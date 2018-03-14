@@ -75,4 +75,4 @@ def generate_matrix():
             if(go_id_list[i] in values or go_id_list[i] == values):
                 matrix[i][j] = 1
 
-    return matrix, annotation_map_keys
+    return matrix, annotation_map_keys, go_id_list
