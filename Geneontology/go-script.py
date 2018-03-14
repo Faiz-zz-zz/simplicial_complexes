@@ -75,14 +75,14 @@ def generate_matrix(gene_type):
     w, h = len(annotation_map_keys), no_go_ids;
     # fill it up with 0's
     # matrix = [[0 for x in range(w)] for y in range(h)]
-    matrix = numpy.zeros((w,h))
+    matrix = numpy.zeros((h,w))
 
     for i in range(0, h):
         for j in range(0, w):
             # get the list of annotations from each gene
-            values = annotation_map[annotation_map_keys[i]]
+            values = annotation_map[annotation_map_keys[j]]
             # if the popular GO:ID matches any of the annotations associated with a gene
-            if(go_id_list[j] in values or go_id_list[j] == values):
+            if(go_id_list[i] in values or go_id_list[i] == values):
                 matrix[i][j] = 1
 
     print(matrix)
