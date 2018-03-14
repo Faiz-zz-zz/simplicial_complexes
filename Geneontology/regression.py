@@ -10,6 +10,7 @@ from go_script import generate_matrix
 from itertools import chain
 from itertools import combinations
 
+
 measures = ["betweenness", "closeness", "degree"]
 
 name_map = {
@@ -69,12 +70,13 @@ def generate_measure_matrix():
             except:
                 gene_measure_list.append(0)  # me sorry
         measure_matrix.append(gene_measure_list)
-    return matrix, measure_matrix, go_ids
+    return matrix, measure_matrix, go_ids, gene_list
+
 
 
 def calculate_regression():
     for measure in measures:
-        matrix, measures_list = generate_measure_matrix(measure)
+        matrix, measures, _, _ = generate_measure_matrix(measure)
         go_measures = matrix[0]
         # print(len(go_measures), len(measures), "SUP SUP SUP")
         slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(np.asarray(measures_list), go_measures)
@@ -114,7 +116,81 @@ def get_model(train_data):
         models.append(clf)
     return models
 
-calculate_multifit()
+# def get_train_test_matrix(gene_test, gene_list, go_matrix, measure_matrix):
+#     index_list = []
+#     go_train_matrix = [i for i in go_matrix]
+#     measure_train_matrix = [i for i in measure_matrix]
+
+#     go_test_matrix = []
+#     measure_test_matrix = []
+
+#     for elem in gene_test:
+#         index_list.append(gene_list.index(elem))
+
+#     for idx in index_list:
+#         go_test_matrix.append(go_matrix.index(idx))
+#         go_train_matrix.remove(idx)
+
+#         measure_test_matrix.append(measure_matrix.index(idx))
+#         measure_train_matrix.remove(idx)
+
+#     return go_train_matrix, measure_train_matrix, go_test_matrix, measure_test_matrix
+
+
+def zip_measure_with_go(measure_matrix, go_matrix):
+
+    list_measure_go = []
+    for go_id in go_matrix:
+        list_measure_go.append(list(zip(go_id, measure_matrix)))
+
+    return list_measure_go
+
+def remove_all_test_genes(index_list, go_id_to_measure_map):
+    for idx in index_list:
+        go_id_to_measure_map.remove(idx)
+
+def remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes):
+
+    go_id_to_measure_map = []
+    # test_gene_data = []
+    index_list = []
+    gene_data = []
+
+    for elem in gene_test:
+        index_list.append(gene_list.index(elem))
+
+    for go_id in go_matrix:
+        go_id_to_measure_map = list(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2]))
+        remove_all_test_genes(index_list, go_id_to_measure_map)
+        gene_data.append(go_id_to_measure_map)
+
+    return gene_data
+
+
+def build_model_input(gene_data):
+    model_input = []
+    for go_id in gene_data:
+        ret = []
+        for i in range(4):
+            ret.append(list(map(lambda k: k[i], go_id)))
+        model_input.append(ret)
+    return model_input
+
+def predict():
+    go_matrix, measure_matrix, go_ids, gene_list = generate_measure_matrix()
+    train_data_genes, test_data_genes = train_test_split(gene_list, test_size=0.2)
+    genes_data = remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes)
+
+    model_input = build_model_input(genes_data)
+
+    models_for_each_go_id = []
+    for data in model_input:
+        models = get_model(data)
+        models_for_each_go_id.append(models)
+
+
+
+    # list_measure_go = zip_measure_with_go(measure_matrix, go_matrix)
 
 
 
