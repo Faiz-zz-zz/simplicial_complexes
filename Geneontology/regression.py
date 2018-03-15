@@ -115,7 +115,7 @@ def get_model(train_data):
         clf = linear_model.LinearRegression()
         clf.fit(X, Y)
         models.append((clf, input_nums))
-    return models, 
+    return models
 
 # def get_train_test_matrix(gene_test, gene_list, go_matrix, measure_matrix):
 #     index_list = []
@@ -188,7 +188,7 @@ def predict():
     go_matrix, measure_matrix, go_ids, gene_list = generate_measure_matrix()
     predictions = {}
     for ind, go_id in enumerate(go_matrix):
-        train_data, test_data = train_test_split(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2]), test_size=0.2)
+        train_data, test_data = train_test_split(list(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2])), test_size=0.2)
         input_data = build_model_input(train_data)
         pred_data = build_model_input(test_data)
         models = get_model(input_data)
@@ -203,8 +203,17 @@ def predict():
             pred = model.predict(pred_input)
             go_id_models_pred[tuple(centralities)] = {"prediction": pred, "rms": model.score(pred_input, pred_data[0])}
         predictions[go_ids[ind]] = go_id_models_pred
-                
+
     return predictions
+# a = predict()
+
+# new_dictionary = {}
+# for key, value in a.items():
+#     sub_dict = {}
+#     for k, v in value.items():
+#         v["prediction"] = np.ndarray.tolist(v["prediction"])
+#         sub_dict[k.__str__()] = v
+#     new_dictionary[key] = sub_dict
 
 
-
+# print(json.dumps(new_dictionary, indent=4))
