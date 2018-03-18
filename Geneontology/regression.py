@@ -3,7 +3,7 @@ import json
 # import scipy.stats
 import numpy as np
 from sklearn import linear_model
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.model_selection import train_test_split
 from collections import defaultdict
 from filenames import COMPLEX_BETWEENNESS, COMPLEX_CLOSENESS, COMPLEX_DEGREE, \
@@ -11,7 +11,7 @@ from filenames import COMPLEX_BETWEENNESS, COMPLEX_CLOSENESS, COMPLEX_DEGREE, \
 from go_script import generate_matrix
 from itertools import chain
 from itertools import combinations
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 
 measures = ["betweenness", "closeness", "degree"]
@@ -106,6 +106,9 @@ def calculate_multifit():
         clf.fit(X, Y)
         print("Coeff is: {}".format(clf.score(X, Y)))
 
+global_method = RandomForestRegressor
+global_params = {}
+
 def get_model(train_data):
     measure_combs = powerset([0, 1, 2])
     Y, *centralities = train_data
@@ -115,7 +118,7 @@ def get_model(train_data):
         for i in input_nums:
             X.append(centralities[i])
         X = np.asarray(X).T
-        clf = RandomForestRegressor(n_estimators=2)
+        clf = global_method(**global_params)
         clf.fit(X, Y)
         models.append((clf, input_nums))
     return models
@@ -205,7 +208,7 @@ def predict_lin_regression():
                 pred_input.append(pred_data[c + 1])
             pred_input = np.asarray(pred_input).T
             pred = model.predict(pred_input)
-            go_id_models_pred[tuple(centralities)] = {"prediction": pred, "rms": model.score(pred_input, pred_data[0])}
+            go_id_models_pred[tuple(centralities).__str__()] = {"prediction": np.ndarray.tolist(pred), "rms": model.score(pred_input, pred_data[0])}
         predictions[go_ids[ind]] = go_id_models_pred
 
     return predictions
@@ -228,14 +231,29 @@ def predict_svm():
                 pred_input.append(pred_data[c + 1])
             pred_input = np.asarray(pred_input).T
             pred = model.predict(pred_input)
-            go_id_models_pred[tuple(centralities)] = {"prediction": pred, "actual": pred_data[0]}
-            print("\n\n")
-            pred = list(map(lambda k: 0 if k > 0.0 else 1, pred))
-            print(pred_data[0][:20])
-            print(pred[:20])
-            print("\n\n")
+            go_id_models_pred[tuple(centralities).__str__()] = {"prediction": pred, "actual": pred_data[0]}
+            # pred = list(map(lambda k: 0 if k > 0.0 else 1, pred))
         predictions[go_ids[ind]] = go_id_models_pred
 
     return predictions
 
-predict_svm()
+
+methods = {
+    "random_forest_classifier": [RandomForestClassifier, {"n_estimators": 2}],
+    "ranodm_forest_regressor": [RandomForestRegressor, {"n_estimators": 2}],
+    "linear_regression": [LinearRegression, {}],
+    "logistic_regression": [LogisticRegression, {}]
+}
+
+total_pred = {}
+
+for name, method in methods.items():
+    global_method, global_params = method
+    total_pred[name] = predict_lin_regression()
+
+import json
+
+with open("all_pred_ppi.json", "w") as out:
+    json.dump(total_pred, out)
+
+
