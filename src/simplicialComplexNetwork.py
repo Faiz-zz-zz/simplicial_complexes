@@ -32,10 +32,17 @@ class Simplex(Graph):
         Graph.__init__(self, nodes, edges)
         self.triangles = defaultdict(set)
         self.edge_triangle_map = defaultdict(set)
+        self.binary_network_model = nx.Graph()
+        self.triangle_to_id = {}
+        self.id_to_triangle = {}
         self.edge_map = {}
+        print("Generate edge map")
         self.generate_edge_map()
+        print("Generate triangles")
         self.generate_triangles()
+        print("Generate generate simp as binary network")
         self.model_simplicial_complex_as_binary_network()
+        print("All done")
 
     def generate_edge_map(self):
         for edge in self.edges:
@@ -140,33 +147,41 @@ class Simplex(Graph):
     #             shortest = len(all_paths[i])
     #     return all_paths
 
-    def create_edges_from_triangles(self, tr_list):
+    def create_edges_from_triangles(self, tr_list, edges):
+        s = 0
         for tr1 in tr_list:
             for tr2 in tr_list:
                 if tr1 != tr2:
                     node_a = self.triangle_to_id[tr1]
                     node_b = self.triangle_to_id[tr2]
-                    self.binary_network_edges.append((node_a, node_b))
+                    k = tuple(list(sorted((node_a, node_b))))
+                    if k not in edges:
+                        s += 1
+                        edges.add(k)
+        return s
 
     def map_triangles_to_ids(self):
         num_of_triangles = len(self.triangles)
-        self.triangle_to_id = {}
-        self.id_to_triangle = {}
         triangles_list = list(self.triangles)
         for i in range(num_of_triangles):
             self.triangle_to_id[triangles_list[i]] = i
             self.id_to_triangle[i] = triangles_list[i]
 
     def model_simplicial_complex_as_binary_network(self):
-        self.binary_network_nodes = list(range(0, len(self.triangles)))
-        self.binary_network_edges = []
-        self.binary_network_model = nx.Graph()
+        binary_network_nodes = list(range(0, len(self.triangles)))
+        binary_network_edges = set()
+        binary_netowrk_edge = list(binary_network_edges)
         self.map_triangles_to_ids()
+        tot = len(self.edge_triangle_map)
+        i = 0
+        tot_edges = 0
         for edge, tr_list in self.edge_triangle_map.items():
-            self.create_edges_from_triangles(tr_list)
+            print("Binary: {}/{} Edges: {}".format(i, tot, tot_edges))
+            i += 1
+            tot_edges += self.create_edges_from_triangles(tr_list, binary_network_edges)
 
-        self.binary_network_model.add_nodes_from(self.binary_network_nodes)
-        self.binary_network_model.add_edges_from(self.binary_network_edges)
+        self.binary_network_model.add_nodes_from(binary_network_nodes)
+        self.binary_network_model.add_edges_from(binary_network_edges)
 
 
     def get_edges(self, triangle):
@@ -365,7 +380,6 @@ class Simplex(Graph):
         self.write_to_file_degree_centralities()
 
     def get_both(self):
-        self.closeness_centrality_all()
         self.degree_distribution_centrality_all()
         self.betweenness_centrality_all()
 
@@ -491,7 +505,7 @@ def generate_metrics(methods, data_set):
             "",
             'human'
         )
-        pass
+    print("Finish calculation")
 
     available_methods = {
         "betweenness": simplex.betweenness_centrality_all,

@@ -3,6 +3,7 @@ import json
 # import scipy.stats
 import numpy as np
 from sklearn import linear_model
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from collections import defaultdict
 from filenames import COMPLEX_BETWEENNESS, COMPLEX_CLOSENESS, COMPLEX_DEGREE, \
@@ -10,6 +11,7 @@ from filenames import COMPLEX_BETWEENNESS, COMPLEX_CLOSENESS, COMPLEX_DEGREE, \
 from go_script import generate_matrix
 from itertools import chain
 from itertools import combinations
+from sklearn.ensemble import RandomForestRegressor
 
 
 measures = ["betweenness", "closeness", "degree"]
@@ -50,6 +52,7 @@ def parse_json(measure):
     for data in measure_map:
         data_ppi[data] = measure_map[data]
     return data_ppi
+
 
 
 def generate_measure_matrix():
@@ -112,7 +115,7 @@ def get_model(train_data):
         for i in input_nums:
             X.append(centralities[i])
         X = np.asarray(X).T
-        clf = linear_model.LinearRegression()
+        clf = RandomForestRegressor(n_estimators=2)
         clf.fit(X, Y)
         models.append((clf, input_nums))
     return models
@@ -184,7 +187,8 @@ def build_prediction_data(idx, test_data):
     prediction_data = build_model_input(go_id_data)
     return prediction_data
 
-def predict():
+
+def predict_lin_regression():
     go_matrix, measure_matrix, go_ids, gene_list = generate_measure_matrix()
     predictions = {}
     for ind, go_id in enumerate(go_matrix):
@@ -205,15 +209,33 @@ def predict():
         predictions[go_ids[ind]] = go_id_models_pred
 
     return predictions
-# a = predict()
 
-# new_dictionary = {}
-# for key, value in a.items():
-#     sub_dict = {}
-#     for k, v in value.items():
-#         v["prediction"] = np.ndarray.tolist(v["prediction"])
-#         sub_dict[k.__str__()] = v
-#     new_dictionary[key] = sub_dict
+def predict_svm():
+    go_matrix, measure_matrix, go_ids, gene_list = generate_measure_matrix()
+    predictions = {}
+    for ind, go_id in enumerate(go_matrix):
+        train_data, test_data = train_test_split(list(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2])), test_size=0.2)
+        input_data = build_model_input(train_data)
+        pred_data = build_model_input(test_data)
+        if not sum(input_data[0]): continue
+        models = get_model(input_data)
+        go_id_models_pred = {}
+        for model in models:
+            model, centralities = model
+            model_cent_pred = []
+            pred_input = []
+            for c in centralities:
+                pred_input.append(pred_data[c + 1])
+            pred_input = np.asarray(pred_input).T
+            pred = model.predict(pred_input)
+            go_id_models_pred[tuple(centralities)] = {"prediction": pred, "actual": pred_data[0]}
+            print("\n\n")
+            pred = list(map(lambda k: 0 if k > 0.0 else 1, pred))
+            print(pred_data[0][:20])
+            print(pred[:20])
+            print("\n\n")
+        predictions[go_ids[ind]] = go_id_models_pred
 
+    return predictions
 
-# print(json.dumps(new_dictionary, indent=4))
+predict_svm()

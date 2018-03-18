@@ -8,9 +8,9 @@ This process is only used to generate graphs
 and precompute measures that are algorithmic and computationally heavy.
 
 """
+import sys
 import os.path
 import requests
-import sys
 
 from clean_data import clean_data, check_files
 import simplicialComplexNetwork as scn
