@@ -38,7 +38,7 @@ with open("metrics.csv", "w") as outfile:
         for comb in global_comb:
             result[comb + " PPI"] = method_map[method][comb]["ppi"][0] / method_map[method][comb]["ppi"][1]
             result[comb + " SIMP"] = method_map[method][comb]["simp"][0] / method_map[method][comb]["simp"][1]
-            result[comb + " Gain"] = "{0:.2f}%".format(((result[comb + " SIMP"] - result[comb + " PPI"]) / result[comb + " PPI"]) * 100)
+            result[comb + " Gain"] = "{0:.2f}%".format(((result[comb + " SIMP"] - result[comb + " PPI"]) / abs(result[comb + " PPI"])) * 100)
         writer.writerow(result)
 
 

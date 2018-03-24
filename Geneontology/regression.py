@@ -61,7 +61,6 @@ def generate_measure_matrix():
         "closeness": COMPLEX_CLOSENESS,
         "degree": COMPLEX_DEGREE
     }
-    gene_id_converter = get_actual_map()
     matrix, gene_list, go_ids = generate_matrix()
 
     measure_matrix = []
@@ -70,7 +69,7 @@ def generate_measure_matrix():
         gene_measure_list = []
         for gene in gene_list:
             try:
-                gene_measure_list.append(gene_measure[gene_id_converter[str(gene)]])
+                gene_measure_list.append(gene_measure[gene]])
             except:
                 gene_measure_list.append(0)  # me sorry
         measure_matrix.append(gene_measure_list)
