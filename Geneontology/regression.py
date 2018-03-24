@@ -12,6 +12,7 @@ from go_script import generate_matrix
 from itertools import chain
 from itertools import combinations
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.cluster import AgglomerativeClustering
 
 
 measures = ["betweenness", "closeness", "degree"]
@@ -69,7 +70,7 @@ def generate_measure_matrix():
         gene_measure_list = []
         for gene in gene_list:
             try:
-                gene_measure_list.append(gene_measure[gene]])
+                gene_measure_list.append(gene_measure[gene])
             except:
                 gene_measure_list.append(0)  # me sorry
         measure_matrix.append(gene_measure_list)
@@ -237,22 +238,70 @@ def predict_svm():
     return predictions
 
 
-methods = {
-    "random_forest_classifier": [RandomForestClassifier, {"n_estimators": 2}],
-    "ranodm_forest_regressor": [RandomForestRegressor, {"n_estimators": 2}],
-    "linear_regression": [LinearRegression, {}],
-    "logistic_regression": [LogisticRegression, {}]
-}
+# This is a helper function to make verification easier for me
+def zip_all_train_data(train_map):
+    new_map = {}
+    for key, value in train_map.items():
+        new_map[key] = list(zip(*value))
+    return new_map
 
-total_pred = {}
+def cluster_go_ids():
+    matrix, _,  _ = generate_matrix()
+    trans_matrix = [list(x) for x in zip(*matrix)]
+    clustering = AgglomerativeClustering(linkage='ward', n_clusters=200)
+    train_data, test_data = train_test_split(trans_matrix, test_size=0.2)
+    #print("this is train data {}".format(train_data))
 
-for name, method in methods.items():
-    global_method, global_params = method
-    total_pred[name] = predict_lin_regression()
+    print("About to run clustering...")
+    clustering.fit(train_data)
+    #print("these is the size {}".format(len(clustering.labels_)))
+    training_map = {}
+    test_map = {}
+    for i, elem in enumerate(clustering.labels_):
+        if elem in training_map:
+            training_map[elem].append(train_data[i])
+        else:
+            training_map[elem] = [train_data[i]]
 
-import json
+    # for key, val in training_map.items():
+    #     print("this is the key {} and value {}".format(key, val))
 
-with open("all_pred_ppi.json", "w") as out:
-    json.dump(total_pred, out)
+    print("About to predict")
+    ret = clustering.fit_predict(test_data, y=None)
+    print("Prediction done")
+
+    for i, elem in enumerate(ret):
+        if elem in test_map:
+            test_map[elem].append(test_data[i])
+        else:
+            test_map[elem] = [test_data[i]]
+    
+
+    new_map = zip_all_train_data(training_map)
+    for key, val in new_map.items():
+        print("this is the key {} this is the value {}".format(key, val))
+        if key in test_map:
+            print("this is the predicted in the same cluster {}".format(test_data[key]))
+        else:
+            continue
+
+cluster_go_ids()
+# methods = {
+#     "random_forest_classifier": [RandomForestClassifier, {"n_estimators": 2}],
+#     "ranodm_forest_regressor": [RandomForestRegressor, {"n_estimators": 2}],
+#     "linear_regression": [LinearRegression, {}],
+#     "logistic_regression": [LogisticRegression, {}]
+# }
+
+# total_pred = {}
+
+# for name, method in methods.items():
+#     global_method, global_params = method
+#     total_pred[name] = predict_lin_regression()
+
+# import json
+
+# with open("all_pred_ppi.json", "w") as out:
+#     json.dump(total_pred, out)
 
 
