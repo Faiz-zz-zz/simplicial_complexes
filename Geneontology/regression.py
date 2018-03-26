@@ -378,17 +378,16 @@ def cluster_based_on_centrality():
     clustering = AgglomerativeClustering(linkage='ward', n_clusters=400)
     print("About to run clustering...")
     clustering.fit(train_data)
-    dominant_clusters = find_most_dominant_clusters(clustering)
-    clusters_list = get_clusters(dominant_clusters)
+    # dominant_clusters = find_most_dominant_clusters(clustering)
+    # clusters_list = get_clusters(dominant_clusters)
 
     clusters_map = {}
     gene_list = list(gene_list)
     for gene_index, cluster in enumerate(clustering.labels_):
-        if cluster in clusters_list:
-            if cluster in clusters_map:
-                clusters_map[cluster].append(gene_list[gene_index])
-            else:
-                clusters_map[cluster] = [gene_list[gene_index]]
+        if cluster in clusters_map:
+            clusters_map[cluster].append(gene_list[gene_index])
+        else:
+            clusters_map[cluster] = [gene_list[gene_index]]
        
     final_data = {}
 
