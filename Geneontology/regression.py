@@ -2,7 +2,7 @@ import json
 # import scipy as sp
 # import scipy.stats
 import numpy as np
-import heapq 
+import heapq
 from sklearn import linear_model
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.model_selection import train_test_split
@@ -15,7 +15,7 @@ from itertools import combinations
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.cluster import AgglomerativeClustering
 
-
+genes_annotation_data = json.loads(open("annotation_map.json").read())
 measures = ["betweenness", "closeness", "degree"]
 
 name_map = {
@@ -23,6 +23,8 @@ name_map = {
     COMPLEX_CLOSENESS: "closeness_centrality",
     COMPLEX_DEGREE: "degree_centrality"
 }
+
+NUM_CLUSTER = 400
 
 
 def powerset(iterable):
@@ -51,8 +53,8 @@ def parse_json(measure):
 
     measure_map = dict(list(map(lambda k: (k[0], max(k[1])), list(measure_map.items()))))
     data_ppi = json.loads(open(measure.replace(".json", "_PPI.json")).read())
-    for data in measure_map:
-        data_ppi[data] = measure_map[data]
+    # for data in measure_map:
+    #     data_ppi[data] = measure_map[data]
     return data_ppi
 
 
@@ -171,16 +173,20 @@ def build_prediction_data(idx, test_data):
     go_id_data = test_data.index(idx)
     prediction_data = build_model_input(go_id_data)
     return prediction_data
-
+from sklearn.metrics import mean_squared_error
 
 def predict_lin_regression():
     go_matrix, measure_matrix, go_ids, gene_list = generate_measure_matrix()
     predictions = {}
+    ret_model = (None, 0)
     for ind, go_id in enumerate(go_matrix):
         train_data, test_data = train_test_split(list(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2])), test_size=0.2)
         input_data = build_model_input(train_data)
         pred_data = build_model_input(test_data)
+        if not sum(input_data[0]):
+            continue
         models = get_model(input_data)
+        ret_model = max((ret_model, (models, sum(input_data))), key=lambda k: k[1])
         go_id_models_pred = {}
         for model in models:
             model, centralities = model
@@ -189,11 +195,11 @@ def predict_lin_regression():
             for c in centralities:
                 pred_input.append(pred_data[c + 1])
             pred_input = np.asarray(pred_input).T
-            pred = model.predict(pred_input)
-            go_id_models_pred[tuple(centralities).__str__()] = {"prediction": np.ndarray.tolist(pred), "rms": model.score(pred_input, pred_data[0])}
+            predicted = model.predict(pred_input)
+            go_id_models_pred[tuple(centralities).__str__()] = {"rms": model.score(pred_input, pred_data[0]), "mse": mean_squared_error(predicted, pred_data[0])}
         predictions[go_ids[ind]] = go_id_models_pred
-
-    return predictions
+    return ret_model[0]
+    # return predictions
 
 def predict_svm():
     go_matrix, measure_matrix, go_ids, gene_list = generate_measure_matrix()
@@ -212,8 +218,8 @@ def predict_svm():
             for c in centralities:
                 pred_input.append(pred_data[c + 1])
             pred_input = np.asarray(pred_input).T
-            pred = model.predict(pred_input)
-            go_id_models_pred[tuple(centralities).__str__()] = {"prediction": pred, "actual": pred_data[0]}
+            # pred = model.predict(pred_input)
+            go_id_models_pred[tuple(centralities).__str__()] = {"actual": pred_data[0]}
             # pred = list(map(lambda k: 0 if k > 0.0 else 1, pred))
         predictions[go_ids[ind]] = go_id_models_pred
 
@@ -265,7 +271,7 @@ def find_most_dominant_clusters(clustering_model):
             freq_map[cluster] +=1
         else:
             freq_map[cluster] = 1
-    
+
     for k, v in freq_map.items():
         heapq.heappush(heap, (v, k))
 
@@ -285,7 +291,7 @@ def build_david_map(final_map, dominant_clusters):
 
 def get_clusters(dominant_clusters):
     clusters = []
-    for _, (_, cluster_id) in enumerate(dominant_clusters):  
+    for _, (_, cluster_id) in enumerate(dominant_clusters):
         clusters.append(cluster_id)
     return clusters
 
@@ -302,7 +308,7 @@ def get_annotation_map(genes_in_cluster):
                 go_id_map[annot] += 1
             else:
                 go_id_map[annot] = 1
-    
+
     for go_id, freq in go_id_map.items():
         heapq.heappush(heap, (freq, go_id))
 
@@ -310,19 +316,19 @@ def get_annotation_map(genes_in_cluster):
     top_go_ids_list = []
     for _, (_, go_id) in enumerate(top_go_ids_tuples):
         top_go_ids_list.append(go_id)
-    
+
     return top_go_ids_list
 
 
 # N is the size of the cluster (only annotated genes from the cluster are taken into account),
 # X is the number of genes in the cluster that are annotated with the GO term in question,
-# M is the number of all genes in the network that are annotated with any GO term, 
-# K is the number of genes in the network that are annotated with the GO term in question. 
-# A cluster is significantly enriched in a given GO term if the corresponding p-value is smaller than or equal to 0.05. 
+# M is the number of all genes in the network that are annotated with any GO term,
+# K is the number of genes in the network that are annotated with the GO term in question.
+# A cluster is significantly enriched in a given GO term if the corresponding p-value is smaller than or equal to 0.05.
 
 def get_N_and_X(cluster, go_term, genes_annotation_data):
     genes_list = cluster[0]
-    N = 0 
+    N = 0
     X = 0
     for gene in genes_list:
         if gene in genes_annotation_data:
@@ -345,14 +351,23 @@ def get_M_and_K(genes_list, go_term, genes_annotation_data):
 
 # Each cluster is a list of genes and go ids in it
 # Genes list is the list of genes in the whole network
+import math
+
+def nCr(n,r):
+    f = math.factorial
+    return f(n) // f(r) // f(n-r)
+
 def calc_p_value(cluster, go_term, genes_list):
-    genes_annotation_data = json.loads(open("annotation_map.json").read())
+    # genes_annotation_data = json.loads(open("annotation_map.json").read())
     N, X = get_N_and_X(cluster, go_term, genes_annotation_data)
     M, K = get_M_and_K(genes_list, go_term, genes_annotation_data)
-    p_value =  #calculation using the variables above
+    p_value =  1
+    for i in range(X):
+        p_value -= (nCr(K, i) * nCr(M - K, N - i) / nCr(M, N))
+
     # The formula is here https://www.nature.com/articles/srep35098#supplementary-information
     return p_value
-    
+
 
 #  We are only considering top 10 clusters for now
 # You can change the value
@@ -360,22 +375,26 @@ def calc_p_value(cluster, go_term, genes_list):
 def calculate_p_value_for_all_clusters():
     final_data, gene_list, go_ids = cluster_based_on_centrality()
     all_clusters_p_vals = {}
+    tot = len(final_data)
+    i = 0
     for cluster_id, cluster_data in final_data.items():
+        i += 1
+        print("Done {}/{}".format(i, tot))
         p_val_map = {}
         for go_id in go_ids:
             p_value = calc_p_value(cluster_data, go_id, gene_list)
             p_val_map[go_id] = p_value
         all_clusters_p_vals[cluster_id] = p_val_map
-    
+
     # This is how it should look like
     # {"cluster_id": {"GO_id":"p_value"}}
-    return all_clusters_p_vals        
+    return all_clusters_p_vals
 
 
 def cluster_based_on_centrality():
     _, measure_matrix, go_ids, gene_list  = generate_measure_matrix()
     train_data = list(zip(*measure_matrix))
-    clustering = AgglomerativeClustering(linkage='ward', n_clusters=400)
+    clustering = AgglomerativeClustering(linkage='ward', n_clusters=NUM_CLUSTER)
     print("About to run clustering...")
     clustering.fit(train_data)
     # dominant_clusters = find_most_dominant_clusters(clustering)
@@ -388,7 +407,7 @@ def cluster_based_on_centrality():
             clusters_map[cluster].append(gene_list[gene_index])
         else:
             clusters_map[cluster] = [gene_list[gene_index]]
-       
+
     final_data = {}
 
     for cluster_id, genes_list_in_cluster in clusters_map.items():
@@ -413,7 +432,7 @@ def cluster_based_on_centrality():
 #     trans_matrix = [list(x) for x in zip(*matrix)]
 #     train_data_matrix = append_centrality(trans_matrix, measure_matrix)
 
-#     clustering = AgglomerativeClustering(linkage='ward', n_clusters=450) 
+#     clustering = AgglomerativeClustering(linkage='ward', n_clusters=450)
 #     print("About to run clustering...")
 #     clustering.fit(train_data_matrix)
 
@@ -443,9 +462,10 @@ def cluster_based_on_centrality():
     #         test_map[elem].append(test_data[i])
     #     else:
     #         test_map[elem] = [test_data[i]]
-    
 
 
+
+# # cluster_go_ids()
 
     # new_map = zip_all_train_data(training_map)
     # final_map = create_rep_goID_map(new_map, go_ids_list)
@@ -465,12 +485,11 @@ def cluster_based_on_centrality():
         # else:
         #     continue
 
-cluster_based_on_centrality()
 # methods = {
-#     "random_forest_classifier": [RandomForestClassifier, {"n_estimators": 2}],
-#     "ranodm_forest_regressor": [RandomForestRegressor, {"n_estimators": 2}],
+#     # "random_forest_classifier": [RandomForestClassifier, {"n_estimators": 2}],
+#     # "ranodm_forest_regressor": [RandomForestRegressor, {"n_estimators": 2}],
 #     "linear_regression": [LinearRegression, {}],
-#     "logistic_regression": [LogisticRegression, {}]
+#     # "logistic_regression": [LogisticRegression, {}]
 # }
 
 # total_pred = {}
@@ -484,4 +503,19 @@ cluster_based_on_centrality()
 # with open("all_pred_ppi.json", "w") as out:
 #     json.dump(total_pred, out)
 
+d = calculate_p_value_for_all_clusters()
 
+
+vals = {}
+
+for i in range(100, 901, 100):
+    total = 0
+    NUM_CLUSTER = i
+    for cluster, go_ids in d.items():
+        for go_id, p in go_ids.items():
+            print(p)
+            if p < 0.05:
+            total += 1
+    vals[i] = total
+    with open("ppi.json", "w") as out:
+        json.dump(vals, out)
