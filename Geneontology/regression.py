@@ -353,9 +353,19 @@ def get_M_and_K(genes_list, go_term, genes_annotation_data):
 # Genes list is the list of genes in the whole network
 import math
 
+fact_map = {}
+
 def nCr(n,r):
     f = math.factorial
-    return f(n) // f(r) // f(n-r)
+    f_n, f_r, f_n_sub_r = None, None, None
+    if n not in fact_map:
+        fact_map[n] = f(n)
+    if r not in fact_map:
+        fact_map[r] = f(r)
+    if n - r not in fact_map:
+        fact_map[n - r] = f(n - r)
+    f_n, f_r, f_n_sub_r = fact_map[n], fact_map[r], fact_map[n - r]
+    return f_n // f_r // f_n_sub_r
 
 def calc_p_value(cluster, go_term, genes_list):
     # genes_annotation_data = json.loads(open("annotation_map.json").read())
@@ -503,19 +513,18 @@ def cluster_based_on_centrality():
 # with open("all_pred_ppi.json", "w") as out:
 #     json.dump(total_pred, out)
 
-d = calculate_p_value_for_all_clusters()
-
 
 vals = {}
 
 for i in range(100, 901, 100):
     total = 0
     NUM_CLUSTER = i
+    d = calculate_p_value_for_all_clusters()
     for cluster, go_ids in d.items():
         for go_id, p in go_ids.items():
             print(p)
             if p < 0.05:
-            total += 1
+                total += 1
     vals[i] = total
     with open("ppi.json", "w") as out:
         json.dump(vals, out)
