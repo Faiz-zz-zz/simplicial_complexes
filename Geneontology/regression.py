@@ -314,10 +314,66 @@ def get_annotation_map(genes_in_cluster):
     return top_go_ids_list
 
 
+# N is the size of the cluster (only annotated genes from the cluster are taken into account),
+# X is the number of genes in the cluster that are annotated with the GO term in question,
+# M is the number of all genes in the network that are annotated with any GO term, 
+# K is the number of genes in the network that are annotated with the GO term in question. 
+# A cluster is significantly enriched in a given GO term if the corresponding p-value is smaller than or equal to 0.05. 
+
+def get_N_and_X(cluster, go_term, genes_annotation_data):
+    genes_list = cluster[0]
+    N = 0 
+    X = 0
+    for gene in genes_list:
+        if gene in genes_annotation_data:
+            N += 1
+            annot_list = genes_annotation_data[gene]
+            if go_term in annot_list:
+                X += 1
+    return N, X
+
+def get_M_and_K(genes_list, go_term, genes_annotation_data):
+    M = 0
+    K = 0
+    for gene in genes_list:
+        if gene in genes_annotation_data:
+            M +=1
+            annot_list = genes_annotation_data[gene]
+            if go_term in annot_list:
+                K += 1
+    return M, K
+
+# Each cluster is a list of genes and go ids in it
+# Genes list is the list of genes in the whole network
+def calc_p_value(cluster, go_term, genes_list):
+    genes_annotation_data = json.loads(open("annotation_map.json").read())
+    N, X = get_N_and_X(cluster, go_term, genes_annotation_data)
+    M, K = get_M_and_K(genes_list, go_term, genes_annotation_data)
+    p_value =  #calculation using the variables above
+    # The formula is here https://www.nature.com/articles/srep35098#supplementary-information
+    return p_value
     
 
+#  We are only considering top 10 clusters for now
+# You can change the value
+
+def calculate_p_value_for_all_clusters():
+    final_data, gene_list, go_ids = cluster_based_on_centrality()
+    all_clusters_p_vals = {}
+    for cluster_id, cluster_data in final_data.items():
+        p_val_map = {}
+        for go_id in go_ids:
+            p_value = calc_p_value(cluster_data, go_id, gene_list)
+            p_val_map[go_id] = p_value
+        all_clusters_p_vals[cluster_id] = p_val_map
+    
+    # This is how it should look like
+    # {"cluster_id": {"GO_id":"p_value"}}
+    return all_clusters_p_vals        
+
+
 def cluster_based_on_centrality():
-    _, measure_matrix, _, gene_list  = generate_measure_matrix()
+    _, measure_matrix, go_ids, gene_list  = generate_measure_matrix()
     train_data = list(zip(*measure_matrix))
     clustering = AgglomerativeClustering(linkage='ward', n_clusters=400)
     print("About to run clustering...")
@@ -345,7 +401,11 @@ def cluster_based_on_centrality():
 
 
     for k, v in final_data.items():
-        print("This is the cluster id {} \n This is the genes list {} \n This is the top 10 GO ids {}".format(k, v[0], v[1]))
+        print("This is the cluster id {} \n This is the genes list inside this cluster{} \n This is the top 10 GO ids in this cluster{} \n".format(k, v[0], v[1]))
+
+    # the format of final_data:
+    # final_data { "cluster_id": [[genes_list],[top_10_go_ids]]}
+    return final_data, list(gene_list), go_ids
 
 
 # def cluster_based_on_go_id_centrality():
