@@ -2,6 +2,7 @@ import json
 # import scipy as sp
 # import scipy.stats
 import numpy as np
+import heapq 
 from sklearn import linear_model
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.model_selection import train_test_split
@@ -160,25 +161,6 @@ def remove_all_test_genes(index_list, go_id_to_measure_map):
     return test_data
 
 
-# def remove_test_genes_data(measure_matrix, go_matrix, gene_list, test_data_genes):
-
-#     go_id_to_measure_map = []
-#     test_gene_data = []
-#     index_list = []
-#     gene_data = []
-
-#     for elem in gene_test:
-#         index_list.append(gene_list.index(elem))
-
-#     for go_id in go_matrix:
-#         go_id_to_measure_map = list(zip(go_id, measure_matrix[0], measure_matrix[1], measure_matrix[2]))
-#         test_data = remove_all_test_genes(index_list, go_id_to_measure_map)
-#         test_gene_data.append(test_data)
-#         gene_data.append(go_id_to_measure_map)
-
-#     return gene_data, test_data
-
-
 def build_model_input(gene_data):
     data = []
     for i in range(4):
@@ -245,47 +227,186 @@ def zip_all_train_data(train_map):
         new_map[key] = list(zip(*value))
     return new_map
 
-def cluster_go_ids():
-    matrix, _,  _ = generate_matrix()
-    trans_matrix = [list(x) for x in zip(*matrix)]
-    clustering = AgglomerativeClustering(linkage='ward', n_clusters=200)
-    train_data, test_data = train_test_split(trans_matrix, test_size=0.2)
-    #print("this is train data {}".format(train_data))
+def append_centrality(matrix, measure_matrix):
+    degree_dist = measure_matrix[2]
+    betweennes = measure_matrix[1]
+    closeness = measure_matrix[0]
+    for index, item in enumerate(matrix):
+        item.append(degree_dist[index])
+        item.append(closeness[index])
+        item.append(betweennes[index])
+    return matrix
 
+def count_annotated_genes(go_id_vector):
+    count = 0
+    for annotation in go_id_vector:
+        if annotation == 1:
+            count += 1
+    return count
+
+# create the representation map to analyse over represented GO Ids
+def create_rep_goID_map(train_map, go_ids_list):
+    rep_map = {}
+    for cluster in train_map:
+        rep_map[cluster] = {}
+        go_ids_vectors = train_map[cluster]
+        for i, go_id_vector in enumerate(go_ids_vectors):
+            num_of_genes_annotated = count_annotated_genes(go_id_vector)
+            if num_of_genes_annotated:
+                rep_map[cluster][go_ids_list[i]] = go_id_vector
+        rep_map[cluster]["genes_list"] = train_map[cluster][-1]
+    return rep_map
+
+def find_most_dominant_clusters(clustering_model):
+    freq_map = {}
+    heap = []
+    for cluster in clustering_model.labels_:
+        if cluster in freq_map:
+            freq_map[cluster] +=1
+        else:
+            freq_map[cluster] = 1
+    
+    for k, v in freq_map.items():
+        heapq.heappush(heap, (v, k))
+
+    return heapq.nlargest(10, heap)
+
+def append_gene_names(train_data_matrix, gene_list):
+    for i, data in enumerate(train_data_matrix):
+        data.append(gene_list[i])
+    return train_data_matrix
+
+
+def build_david_map(final_map, dominant_clusters):
+    david_map = {}
+    for _, (_,cluster_id) in enumerate(dominant_clusters):
+        david_map[cluster_id] = final_map[cluster_id]
+    return david_map
+
+def get_clusters(dominant_clusters):
+    clusters = []
+    for _, (_, cluster_id) in enumerate(dominant_clusters):  
+        clusters.append(cluster_id)
+    return clusters
+
+
+# returns the top most presented go ids among the genes in a cluster
+def get_annotation_map(genes_in_cluster):
+    genes_annotation_data = json.loads(open("annotation_map.json").read())
+    go_id_map = {}
+    heap = []
+    for gene in genes_in_cluster:
+        annotations = genes_annotation_data[gene]
+        for annot in annotations:
+            if annot in go_id_map:
+                go_id_map[annot] += 1
+            else:
+                go_id_map[annot] = 1
+    
+    for go_id, freq in go_id_map.items():
+        heapq.heappush(heap, (freq, go_id))
+
+    top_go_ids_tuples = heapq.nlargest(10, heap)
+    top_go_ids_list = []
+    for _, (_, go_id) in enumerate(top_go_ids_tuples):
+        top_go_ids_list.append(go_id)
+    
+    return top_go_ids_list
+
+
+    
+
+def cluster_based_on_centrality():
+    _, measure_matrix, _, gene_list  = generate_measure_matrix()
+    train_data = list(zip(*measure_matrix))
+    clustering = AgglomerativeClustering(linkage='ward', n_clusters=400)
     print("About to run clustering...")
     clustering.fit(train_data)
-    #print("these is the size {}".format(len(clustering.labels_)))
-    training_map = {}
-    test_map = {}
-    for i, elem in enumerate(clustering.labels_):
-        if elem in training_map:
-            training_map[elem].append(train_data[i])
-        else:
-            training_map[elem] = [train_data[i]]
+    dominant_clusters = find_most_dominant_clusters(clustering)
+    clusters_list = get_clusters(dominant_clusters)
+
+    clusters_map = {}
+    gene_list = list(gene_list)
+    for gene_index, cluster in enumerate(clustering.labels_):
+        if cluster in clusters_list:
+            if cluster in clusters_map:
+                clusters_map[cluster].append(gene_list[gene_index])
+            else:
+                clusters_map[cluster] = [gene_list[gene_index]]
+       
+    final_data = {}
+
+    for cluster_id, genes_list_in_cluster in clusters_map.items():
+        genes_and_top_go_ids = []
+        genes_and_top_go_ids.append(genes_list_in_cluster)
+        top_go_ids_in_cluster = get_annotation_map(genes_list_in_cluster)
+        genes_and_top_go_ids.append(top_go_ids_in_cluster)
+        final_data[cluster_id] = genes_and_top_go_ids
+
+
+    for k, v in final_data.items():
+        print("This is the cluster id {} \n This is the genes list {} \n This is the top 10 GO ids {}".format(k, v[0], v[1]))
+
+
+# def cluster_based_on_go_id_centrality():
+#     matrix, measure_matrix, go_ids_list, gene_list  = generate_measure_matrix()
+
+#     trans_matrix = [list(x) for x in zip(*matrix)]
+#     train_data_matrix = append_centrality(trans_matrix, measure_matrix)
+
+#     clustering = AgglomerativeClustering(linkage='ward', n_clusters=450) 
+#     print("About to run clustering...")
+#     clustering.fit(train_data_matrix)
+
+#     append_gene_names(train_data_matrix, list(gene_list))
+
+#     training_map = {}
+#     dominant_clusters = find_most_dominant_clusters(clustering)
+#     print("thesea are the most dominant ones {}".format(dominant_clusters))
+
+#     for i, elem in enumerate(clustering.labels_):
+#         if elem in training_map:
+#             training_map[elem].append(train_data_matrix[i])
+#         else:
+#             training_map[elem] = [train_data_matrix[i]]
+
+
 
     # for key, val in training_map.items():
     #     print("this is the key {} and value {}".format(key, val))
 
-    print("About to predict")
-    ret = clustering.fit_predict(test_data, y=None)
-    print("Prediction done")
+    # print("About to predict")
+    # ret = clustering.fit_predict(test_data, y=None)
+    # print("Prediction done")
 
-    for i, elem in enumerate(ret):
-        if elem in test_map:
-            test_map[elem].append(test_data[i])
-        else:
-            test_map[elem] = [test_data[i]]
+    # for i, elem in enumerate(ret):
+    #     if elem in test_map:
+    #         test_map[elem].append(test_data[i])
+    #     else:
+    #         test_map[elem] = [test_data[i]]
     
 
-    new_map = zip_all_train_data(training_map)
-    for key, val in new_map.items():
-        print("this is the key {} this is the value {}".format(key, val))
-        if key in test_map:
-            print("this is the predicted in the same cluster {}".format(test_data[key]))
-        else:
-            continue
 
-cluster_go_ids()
+
+    # new_map = zip_all_train_data(training_map)
+    # final_map = create_rep_goID_map(new_map, go_ids_list)
+    # david_input_data_map = build_david_map(final_map, dominant_clusters)
+
+    # new_map2 = zip_all_train_data(test_map)
+
+    # for key, val in david_input_data_map.items():
+    #     print("this is the cluster id {} \n".format(key))
+    #     for i, item in val.items():
+    #         print("this is the go id {} this is the value {} \n".format(i, item))
+        # if key in test_map:
+        #     print("this is the predicted in the same cluster\n")
+        #     v = new_map2[key]
+        #     for i, item in enumerate(v):
+        #         print("this is the go id {} this is the value {} \n".format(i, item))
+        # else:
+        #     continue
+
+cluster_based_on_centrality()
 # methods = {
 #     "random_forest_classifier": [RandomForestClassifier, {"n_estimators": 2}],
 #     "ranodm_forest_regressor": [RandomForestRegressor, {"n_estimators": 2}],
