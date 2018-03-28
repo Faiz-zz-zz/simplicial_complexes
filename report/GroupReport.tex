@@ -37,7 +37,7 @@
 Through comparing the representation of biological functions in the form of PPI networks and simplicial complexes, we aim to find a combination of topological factors that can predict gene description since this later affects protein functions as genes provide the instructions for protein formation. The purpose of our project extends beyond finding the correlation coefficient that best allows us to find a biological feature that can be described by a combination of topological features, and pushes us into analysing the and comparing the prediction power of both the kinds of networks explored. Understanding the role of network properties helps our chances of better understanding the biological functions of genes, and will ultimately aid in isolating causes for gene mutation and disease-causing phenotypes.
 
 \section{Introduction}\label{sec:Introduction}
-Genes are units of genetic information found in DNA, and contain instructions for building vital macromolecules known as proteins. Proteins contribute to crucial processes including transportation of molecules in cells, and catalysing metabolic reactions. The notion of protein function is very context-sensitive, but commonly described as an umbrella-term for all types of processes that a protein can be involved in, such as cellular, molecular, or physiological processes [6]. Consequently, protein function prediction explores the methods employed by bioinformatics researchers to assign such functions to poorly-studied proteins. Furthermore, these methods can provide important benefits in various ways, such as improving understanding of disease, since alterations of proteins are the cause for many diseases, and can also be used to aid rational drug design [7].
+Genes are units of genetic information found in DNA, and contain instructions for building vital macro molecules known as proteins. Proteins contribute to crucial processes including transportation of molecules in cells, and catalysing metabolic reactions. The notion of protein function is very context-sensitive, but commonly described as an umbrella-term for all types of processes that a protein can be involved in, such as cellular, molecular, or physiological processes [6]. Consequently, protein function prediction explores the methods employed by bioinformatics researchers to assign such functions to poorly-studied proteins. Furthermore, these methods can provide important benefits in various ways, such as improving understanding of disease, since alterations of proteins are the cause for many diseases, and can also be used to aid rational drug design [7].
 \par
 Originally, many high-throughput experimental techniques, such as the yeast two-hybrid screening system (Y2H), were used to characterise protein-protein interaction networks (PPIs). [8] The experimental results from these techniques resulted in an abundance of large-scale biological networks that were stored and are still used today, on online databases such as STRING, BioGRID, and MIPS. [10] However, the speed at which new protein sequences were discovered was much faster than the speed at which experimental techniques could characterise them, due to inexpensive sequencing methods. This left a large number of proteins without functional annotations, and highlighted the need for more rapid computational prediction techniques that could complement and guide experimental research. [14]
 \par
@@ -88,19 +88,19 @@ After data cleaning, we proceeded in exploring different methodologies for the c
 For the making of the PPI networks we used NetworkX [31]., which is a Python package “for the creation, manipulation, and study of the structure, dynamics and functions of complex networks”. Some of the key features of this package were: Data structures for graphs, digraphs and multigraphs, many standard graph algorithms and network structure and analysis measure, which will be explored in the next section.However, for the creation of simplicial complexes networks we implemented our own networks since no such libraries exist. 
 
 \subsection{Centrality Measures}
-Within network analysis and graph theory, centrality measures identify the most valuable nodes within a graph [ref]. Centrality measures ultimately tries to answer the question of  “what characterises an important node?”. From this measurement of centrality we can get an idea of the importance of a node within a given network, therefore we decided to both use libraries available to calculate the centrality measurements as well as implementing them from scratch. A complexity analysis of centrality measures will be discussed later in this report. Some of the key centralities explored are explained below
+Within network analysis and graph theory, centrality measures identify the most valuable nodes within a graph [37]. Centrality measures ultimately tries to answer the question of  “what characterises an important node?”. From this measurement of centrality we can get an idea of the importance of a node within a given network, therefore we decided to both use libraries available to calculate the centrality measurements as well as implementing them from scratch. A complexity analysis of centrality measures will be discussed later in this report. Some of the key centralities explored are explained below
 
 \subsubsection{Degree Centrality}
 A simple measure that counts how many neighbours a node has. The degree centrality of a node of a node \(n\), for a given graph \(G:=(N,E)\) with \(|N|\) nodes and \(|E|\) edge is defined as \(C_D(V) = deg(v)\) [ref]. 
 
 \subsubsection{Closeness Centrality}
-A measure of the degree to which a node is near all other nodes in a network. It is calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. Therefore, if a node is more central, this means that it is closer to all the other nodes. More concretely closeness centrality is defined as the reciprocal of the sum of the shortest path distances from \(u\) to all \(n-1\) other nodes. “As the sum of distances is dependent on the number of nodes in the graph, closeness is normalised by the sum of minimum possible distances \(n-1\),  where \(d(u, v)\) is the shortest-path distance between \(u\) and \(v\), and \(n\) is the number of nodes in the graph” [ref]. 
+A measure of the degree to which a node is near all other nodes in a network. It is calculated as the sum of the length of the shortest paths between the node and all other nodes in the graph. Therefore, if a node is more central, this means that it is closer to all the other nodes. More concretely closeness centrality is defined as the reciprocal of the sum of the shortest path distances from \(u\) to all \(n-1\) other nodes. “As the sum of distances is dependent on the number of nodes in the graph, closeness is normalised by the sum of minimum possible distances \(n-1\),  where \(d(u, v)\) is the shortest-path distance between \(u\) and \(v\), and \(n\) is the number of nodes in the graph” [38]. 
 \begin{equation}
 C(u)=\frac{n-1}{\sum_{v=1}^{n-1} d(v,u)}
 \end{equation}
 
 \subsubsection{Betweenness Centrality}
-Betweenness centrality of a node \(v\) is the sum of the fraction of all-pairs shortest paths that pass through \(v\):
+Betweenness centrality of a node \(v\) is the sum of the fraction of all-pairs shortest paths that pass through \(v\) [39]:
 \begin{equation}
 C_B(v)=\sum_{s,t\in{V}}\frac{\sigma(s, t|v)}{\sigma(s, t)}
 \end{equation}
@@ -111,7 +111,7 @@ We used data collected from Gene Ontology to map the relevant genes to their GO 
 In order to discard information that weren’t from experimentally valid sources, we traverse the column of genes, we also check its corresponding column vector and ensure that the Evidence ID belongs to list of ID’s from under ‘Experimental Evidence codes’ which shows that the GO term has been supported by physical characterization of the gene or gene product [24] as we cannot work with predicted data.Therefore it has to be one of the following: Inferred from Experiment (EXP), Inferred from Direct Assay (IDA), Inferred from Physical Interaction (IPI), Inferred from Mutant Phenotype (IMP), Inferred from Genetic Interaction (IGI) and Inferred from Expression Pattern (IEP) [24]. Using the mapping between genes and its corresponding GO:ID vectors, we constructed a matrix with binary values to indicate whether the selected GO:IDs were present in the gene’s vector or not.
 
 \subsection{Machine Learning Models}
-We decided to explore a variety of machine learning models, starting from the simplest and experimenting with more complex algorithms as we progressed In order to build our models, we used scikit-learn which is a free machine learning python library which offers a wide range of regression, clustering and classification algorithms. The core algorithms in this library are written in Cython to achieve performance. The machine models used are explained in more detail below. 
+We decided to explore a variety of machine learning models, starting from the simplest and experimenting with more complex algorithms as we progressed In order to build our models, we used scikit-learn which is a free machine learning python library which offers a wide range of regression, clustering and classification algorithms [29]. The core algorithms in this library are written in Cython to achieve performance. The machine models used are explained in more detail below. 
 
 \subsubsection{Linear Regression}
 For our first experiment, we decided to train a model with linear regression. We simply wanted to test and explore this methodology for the unlikelihood of obtaining meaningful results even though linear regression is not suitable for our purpose. Linear regression is a linear approach to model the relationship between a scalar output variable \(y\) and one or more explanatory input variables \(x\). The linear equation, assigns a certain coefficient to each input variable. For example, a single input variable linear regression equation would look like $y = B_0 + B_1\times{x}$, where \(B_1\) is the coefficient for input \(x\) and \(B_0\) is the bias coefficient giving the line the freedom to move up and down: 
@@ -133,7 +133,7 @@ Additionally, we used random forest, which is a type of ensemble modelling. Ense
 \subsubsection{Hierarchical Agglomerative Clustering}
 Lastly, we attempted hierarchical agglomerative clustering which is a bottom up approach where each observation start within their own clusters and pairs of clusters are merged into new clusters as one moves up the hierarchy. To be able to correctly decide which clusters are combined with each other a measure between the sets are required. 
 
-This is achieved by choosing a suitable metric such as a measure of distance between the pairs, in our case the Euclidean distance. A appropriate metric will impact the shape of the clusters, since some elements may be close to each other to one distance but farther away from another. Additionally, a linkage basis is required, a linkage “specifies the dissimilarity of sets as a function of the pairwise distances of observations in the sets”, in our case it is the Ward’s method.  Using clustering we performed an enrichment analysis, which is a method to identify classes of proteins that are overrepresented or underrepresented using annotations for that gene set. 
+This is achieved by choosing a suitable metric such as a measure of distance between the pairs, in our case the Euclidean distance. A appropriate metric will impact the shape of the clusters, since some elements may be close to each other to one distance but farther away from another. Additionally, a linkage basis is required, a linkage “specifies the dissimilarity of sets as a function of the pairwise distances of observations in the sets”, in our case it is the Ward’s method.  Using clustering we performed an enrichment analysis, which is a method to identify classes of proteins that are over represented or underrepresented using annotations for that gene set. 
 
 \subsection{Benchmarks}
 No reasonable benchmarks except possibly comparing spearman’s rank correlation coefficients with Estrada paper. Even still they use an entirely different dataset as well as a slightly different methodology. It is important to note that the purpose of this paper is to experiment on soley new ideas and methodologies that have not been done in the past, thus finding out new results.  
@@ -278,12 +278,13 @@ Chapter 4 of “Analysis of Biological Networks,“ edited by Bjorn J. Junker an
 Wrzeszczynski, K., Ofran, Y., Rost, B., Nair, R. and Liu, J. (2003). Automatic prediction of protein function. Cellular and Molecular Life Sciences (CMLS), 60(12), pp.2637-2650.
  
 \bibitem{techPapers} 
-\url{https://www.cs.umn.edu/research/technical_reports/view/06-028l}
+Cs.umn.edu. (2018). Browse Technical Reports, Computer Science \& Engineering. [online] Available at: \url{https://www.cs.umn.edu/research/technical_reports/view/06-028l} 
 
 \bibitem{techWebsite}
-\url{https://www.semanticscholar.org/paper/A-(not-so)-Quick-Introduction-to-Protein-Function-Radivojac/d678f9a5e6e430b165b6a98f5fac2cfe66c3dc7c}
+Semanticscholar.org. (2018). A (not so) Quick Introduction to Protein Function Prediction - Semantic Scholar. [online] Available at: \url{https://www.semanticscholar.org/paper/A-(not-so)-Quick-Introduction-to-Protein-Function-Radivojac/d678f9a5e6e430b165b6a98f5fac2cfe66c3dc7c}
 
 \bibitem{techwebsite}
+Young, K. (2018). Yeast Two-hybrid: So Many Interactions, (in) So Little Time….
 \url{https://academic.oup.com/biolreprod/article/58/2/302/2761050}
 
 \bibitem{latexcompanion}
@@ -299,10 +300,10 @@ Andrade, M., Casari, G., de Daruvar, A., Sander, C., Schneider, R., Tamames, J.,
 Reeck, G. R.; de Haen, C.; Teller, D. C.; Doolittle, R. F.; Fitch, W. M.; Dickerson, R. E.; et al. (1987). ""Homology" in proteins and nucleic acids: a terminology muddle and a way out of it". Nature. 50 (5): 667.
 
 \bibitem{latexcompanion}
-\url{https://www.ebi.ac.uk/training/online/course/introduction-protein-classification-ebi/protein-classification}
+EMBL-EBI Train online. (2018). Protein Classification. [online] Available at: \url{https://www.ebi.ac.uk/training/online/course/introduction-protein-classification-ebi/protein-classification}.
 
 \bibitem{latexcompanion}
-\url{https://scholarworks.iupui.edu/handle/1805/3913}
+Zhao, H. (2018). Protein function prediction by integrating sequence, structure and binding affinity information. [online] Scholarworks.iupui.edu. Available at: \url{https://scholarworks.iupui.edu/handle/1805/3913}
 
 \bibitem{latexcompanion}
 Davis, D., Yaveroğlu, Ö., Malod-Dognin, N., Stojmirovic, A. and Pržulj, N. (2015). Topology-function conservation in protein–protein interaction networks. Bioinformatics, 31(10), pp.1632-1639.
@@ -329,43 +330,55 @@ Sharan, R., Ulitsky, I. and Shamir, R. (2007). Network-based prediction of prote
 Courtney, O. T., \& Bianconi, G. (2016). Generalized network structures: The configuration model and the canonical ensemble of simplicial complexes. Physical Review E, 93(6), 062311. 
 
 \bibitem{latexcompanion}
-\url{https://thebiogrid.org/}
+Lab, M. (2018). BioGRID | Database of Protein, Chemical, and Genetic Interactions. [online] Thebiogrid.org. Available at: \url{https://thebiogrid.org/}
 
 \bibitem{latexcompanion}
-The Gene Ontology (GO) database and informatics resource
+Gene Ontology Consortium (2018). The Gene Ontology (GO) database and informatics resource.
 
 \bibitem{latexcompanion}
-\url{http://wodaklab.org/cyc2008/}
+Wodaklab.org. (2018). About - CYC2008 - Wodak Lab. [online] Available at: \url{http://wodaklab.org/cyc2008/}
 
 \bibitem{latexcompanion}
-Gene function prediction using semantic similarity clustering and enrichment analysis in the malaria parasite Plasmodium falciparum
+P. Tedder, J. Bradford, C. Needham, G. McConkey, A. Bulpitt and D. Westhead, "Gene function prediction using semantic similarity clustering and enrichment analysis in the malaria parasite Plasmodium falciparum", Bioinformatics, vol. 26, no. 19, pp. 2431-2437, 2010.
 
 \bibitem{latexcompanion}
-Functional enrichment analyses and construction of functional similarity networks with high confidence function prediction by PFP
+T. Hawkins, M. Chitale and D. Kihara, "Functional enrichment analyses and construction of functional similarity networks with high confidence function prediction by PFP", BMC Bioinformatics, vol. 11, no. 1, p. 265, 2010.
 
 \bibitem{latexcompanion}
-Annotation Enrichment Analysis: An Alternative Method for Evaluating the Functional Properties of Gene Sets
+X. Zhou and Z. Su, "EasyGO: Gene Ontology-based annotation and functional enrichment analysis tool for agronomical species", BMC Genomics, vol. 8, no. 1, p. 246, 2007.
 
 \bibitem{latexcompanion}
-\url{http://scikit-learn.org/stable/}
+scikit-learn: machine learning in Python — scikit-learn 0.19.1 documentation, Scikit-learn.org, 2018. [Online]. Available: \url{http://scikit-learn.org/stable}
 
 \bibitem{latexcompanion}
-\url{https://www2.cs.duke.edu/courses/fall06/cps296.1/Lectures/sec-III-1.pdf}
+Www2.cs.duke.edu, 2018. [Online]. Available: \url{https://www2.cs.duke.edu/courses/fall06/cps296.1/Lectures/sec-III-1.pdf}
 
 \bibitem{latexcompanion}
-\url{https://networkx.github.io/documentation/networkx-1.10/reference/algorithms.centrality.html?highlight=centralities}
+Centrality — NetworkX 1.10 documentation, Networkx.github.io, 2018. [Online]. Available: \url{https://networkx.github.io/documentation/networkx-1.10/reference/algorithms.centrality.html?highlight=centralities}
 
 \bibitem{latexcompanion}
-Gene function prediction using semantic similarity clustering and enrichment analysis in the malaria parasite Plasmodium falciparum
+P. Tedder, J. Bradford, C. Needham, G. McConkey, A. Bulpitt and D. Westhead, "Gene function prediction using semantic similarity clustering and enrichment analysis in the malaria parasite Plasmodium falciparum", 2018. .
 
 \bibitem{latexcompanion}
-Selection of informative clusters from hierarchical cluster tree with gene classes
+Petri Toronen, Ncbi.nlm.nih.gov, 2018. [Online]. Available: \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC407846/pdf/1471-2105-5-32.pdf}
 
 \bibitem{latexcompanion}
-\url{https://pdfs.semanticscholar.org/47c0/a7204e1ec5b48cde77ae12a99ac5d00be1be.pdf}
+Pdfs.semanticscholar.org, 2018. [Online]. Available: \url{https://pdfs.semanticscholar.org/47c0/a7204e1ec5b48cde77ae12a99ac5d00be1be.pdf}
 
 \bibitem{latexcompanion}
 Ties in Proximity and Clustering Compounds
+
+\bibitem{latexcompanion}
+Freudenberg, J., Joshi, V., Hu, Z. and Medvedovic, M. (2009). CLEAN: CLustering Enrichment ANalysis. BMC Bioinformatics, 10(1), p.234.
+
+\bibitem{latexcompanion}
+Newman, M.E.J. 2010. Networks: An Introduction. Oxford, UK: Oxford University Press
+
+\bibitem{latexcompanion}
+Linton C. Freeman: Centrality in networks: I. Conceptual clarification. Social Networks 1:215-239, 1979
+
+\bibitem{latexcompanion}
+Ulrik Brandes: On Variants of Shortest-Path Betweenness Centrality and their Generic Computation. Social Networks 30(2):136-145, 2008
 \end{thebibliography}
 
 
