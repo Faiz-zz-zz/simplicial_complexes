@@ -27,7 +27,9 @@
 \textsc{\LARGE University College London}\\
 \textsc{\normalsize Department of Computer Science}\\
 \textsc{\normalsize COMP3096 - Research Group Project}\\
-[5cm]
+\textsc{\normalsize Mo Afsharmoqaddam, Shivam Shah, Abdul Faiz Punakkath}\\
+\textsc{\normalsize Reemma Puredath, Matineh Akhlaghinia}\\
+
 \end{center}
 
 \end{titlepage}
@@ -237,8 +239,8 @@ p = 1 - \sum_{X-1}^{i=0}\binom{K}{i}\binom{M-K}{N-i}\bigg/\binom{M}{N}
 \end{equation}
 where N is the size of the cluster (only annotated genes from the cluster are taken into account), X is the number of genes in the cluster that are annotated with the GO term in question, M is the number of all genes in the network that are annotated with any GO term, and K is the number of genes in the network that are annotated with the GO term in question. A cluster is significantly enriched in a given GO term if the corresponding p-value is smaller than or equal to 0.05 [41].
 \par 
-We calculated the p value for each GO term in each cluster for both ppi and simplicial complexes [41]. We repeated the experiment by changing the number of clusters from 100 - 800 incrementing by 100 every time. The above figure depicts the number of clusters we have in the experiment and the number of enriched GO terms in that experiment. As we can see clustering based on all three centralities (betweenness, closeness and degree distribution) in simplicial complexes, did not give us more enriched GO terms. The figure also shows that as we increase the number of clusters, the number of enriched GO terms increases in both PPI and simplicial complexes. For future, this clustering may be used for predicting GO terms in the clusters. Also
-we can use combinations of centralities for our clustering model in future to see if we get better enrichments in both simplicial complexes and ppi networks.
+We calculated the p value for each GO term in each cluster for both PPI and simplicial complexes. We repeated the experiment by changing the number of clusters from 100 - 800 incrementing by 100 every time. The above figure depicts the number of clusters we have in the experiment and the number of enriched GO terms in that experiment. As we can see clustering based on all three centralities (betweenness, closeness and degree distribution) in simplicial complexes, did not give us more enriched GO terms. The figure also shows that as we increase the number of clusters, the number of enriched GO terms increases in both PPI and simplicial complexes. For future, this clustering may be used for predicting GO terms in the clusters. Also
+we can use combinations of centralities for our clustering model in future to see if we get better enrichments in both simplicial complexes and PPI networks.
 
 \section{Discussion \& Limitations} 
 After placing the complexes data on top of the PPI network, in order to build the simplicial complex, we had 66,482 triangles in the network. For us to compute closeness centrality and betweenness centrality, we needed to calculate the shortest paths between each pair of triangles. As Floyd Warshall’s shortest path algorithm is \(O(N^3)\), and the number of edges in the simplicial complexes is well over 150 million, which was computationally exhaustive to calculate. A naive implementation could take easily 11 days for betweenness centrality to complete. Additionally, as all the algorithms we implemented were in Python, which is a higher level language with a lot more abstractions, it is in fact much slower than other lower level languages like C or C++. Furthermore, it is worth mentioning that because of the computation time, we were not able to apply our methods to higher dimensions, further than triangles, in simplicial complexes.
