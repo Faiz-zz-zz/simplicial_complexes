@@ -28,7 +28,7 @@
 \textsc{\normalsize Department of Computer Science}\\
 \textsc{\normalsize COMP3096 - Research Group Project}\\
 \textsc{\normalsize Mo Afsharmoqaddam, Shivam Shah, Abdul Faiz Punakkath}\\
-\textsc{\normalsize Reemma Puredath, Matineh Akhlaghinia}\\
+\textsc{\normalsize Reemma Muthal Puredath, Matineh Akhlaghinia}\\
 
 \end{center}
 
@@ -134,7 +134,7 @@ Lastly, we attempted hierarchical agglomerative clustering which is a bottom up 
 This is achieved by choosing a suitable metric such as a measure of distance between the pairs, in our case the Euclidean distance. A appropriate metric will impact the shape of the clusters, since some elements may be close to each other to one distance but farther away from another. Additionally, a linkage basis is required, a linkage “specifies the dissimilarity of sets as a function of the pairwise distances of observations in the sets”, in our case it is the Ward’s method.  Using clustering we performed an enrichment analysis, which is a method to identify classes of proteins that are over represented or underrepresented using annotations for that gene set. 
 
 \subsection{Benchmarks}
-For building proteins as simplicial complexes, no reasonable benchmarks exist. The only existing method  that bears resemblance to our methodology are other forms of clustering methods. An example of such a benchmark method is the CLEAN score proposed by Freudenberg et al [36]. In the paper, they suggest that the CLEAN score approach is a better approach for the integration of biological context to cluster analysis, as opposed to traditional cluster-based scores. The ROC curves that they produced were also insufficient evidence of being accurately able to assess the true and false positives of co-clustered gene pairs when a huge number of Gene Ontology terms are used [36], much like our own results gained from ROC curves. However, unlike the case with our hypothesis, they were able to conclude that their proposed method was indeed superior to traditional cluster-based approaches. 
+For building proteins as simplicial complexes, no reasonable benchmarks exist. The only existing method  that bears resemblance to our methodology are other forms of clustering methods. An example of such a benchmark method is the CLEAN score proposed by Freudenberg et al [36]. In the paper, they suggest that the CLEAN score approach is a better approach for the integration of biological context to cluster analysis, as opposed to traditional cluster-based scores. The Receiver Operating Characteristic (ROC) curves that they produced were also insufficient evidence of being accurately able to assess the true and false positives of co-clustered gene pairs when a huge number of Gene Ontology terms are used [36], much like our own results gained from ROC curves. However, unlike the case with our hypothesis, they were able to conclude that their proposed method was indeed superior to traditional cluster-based approaches. 
 
 \section{Analysis of Results}
 \subsection{Linear Regression}
@@ -163,7 +163,7 @@ Combination of Centralities &Average mean squared error across all Go-ids\\
 \end{tabular}
 \captionof{table}{Table showing all combinations of centralities with their average mean squared errors across GO-ID's}
 \end{center}
-As we can see, Regression is not ideal for this problem. All the models we generated using regression have a really low prediction capacity and really high error rate. Since the problem we are dealing with is a classification problem, regression models are expected to perform poorly. To train our model, we have taken all the combinations of centralities. In the above table, the tuples show what combinations we have used with \(0\) being betweenness centrality, \(1\) being closeness centrality and \(2\) being degree distribution. 
+As we can see, Regression is not ideal for this problem. All the models we generated using regression have a low prediction capacity and high error rate. Since the problem we are dealing with is a classification problem, regression models are expected to perform poorly. To train our model, we have taken all the combinations of centralities. In the above table, the tuples show what combinations we have used with \(0\) being betweenness centrality, \(1\) being closeness centrality and \(2\) being degree distribution. 
 
 \subsection{Logistic Regression}
 \begin{figure}[!htb]
@@ -178,7 +178,7 @@ As we can see, Regression is not ideal for this problem. All the models we gener
 \endminipage
 \caption{Precision and Recall curves of different combinations of centralities for Logistic Regression}
 \end{figure}
-What above figures show, is the difference Precision and Recall curves for different combination of input and how the resulted logistic regression model performed in both ppi and simplicial complexes network. As we can notice, our maximum average precision over all the combination of input is 25\% in simplicial complexes and 22\% in PPI networks. Something else we can observe is that our precision drops really suddenly once we increase the recall. Which means, only very few instances are right if we want to be precise. Precision drops to a constant value and stays around it as the recall increases. It is clear that prediction capacity of this model is quite bad. Some combinations seems to perform better under simplicial complexes and some combinations performs worse.
+What above figures show, is the difference Precision and Recall curves for different combination of input and how the resulted logistic regression model performed in both PPI and simplicial complexes network. As we can notice, our maximum average precision over all the combination of input is 25\% in simplicial complexes and 22\% in PPI networks. Something else we can observe is that our precision drops really suddenly once we increase the recall. Which means, only very few instances are right if we want to be precise. Precision drops to a constant value and stays around it as the recall increases. It is clear that prediction capacity of this model is quite bad. Some combinations seems to perform better under simplicial complexes and some combinations performs worse.
 
 \begin{figure}[!htb]
 \minipage{0.32\textwidth}
@@ -192,7 +192,7 @@ What above figures show, is the difference Precision and Recall curves for diffe
 \endminipage
 \caption{Receiver Operating Characteristic curves of Logistic Regression}
 \end{figure}
-Above shown Receiver Operating Characteristic (ROC) are plotted based on the combination of models we generated from different combinations of input. The dotted line represents the True and False positive output we get from a random classifier when we move the threshold of the prediction from high to low. The Orange curve, ROC curve, represents the True and False positive rate we would get from the models as we move our threshold. Even though three out of 7 models perform bit better than a random classifier, these model’s prediction power is quite low and have a high False positive rate. As we can see, some of the combinations have better True and False positive rate considering the area under the curve which shows how good a model performs. (First and third models have the area value of 0.66 which is more than the other combinations)
+Above shown Receiver Operating Characteristic are plotted based on the combination of models we generated from different combinations of input. The dotted line represents the True and False positive output we get from a random classifier when we move the threshold of the prediction from high to low. The Orange curve, ROC curve, represents the True and False positive rate we would get from the models as we move our threshold. Even though three out of 7 models perform bit better than a random classifier, these model’s prediction power is quite low and have a high False positive rate. As we can see, some of the combinations have better True and False positive rate considering the area under the curve which shows how good a model performs. (First and third models have the area value of 0.66 which is more than the other combinations)
 
 \subsection{Random Forest Classification}
 \begin{figure}[!htb]
@@ -208,7 +208,7 @@ Above shown Receiver Operating Characteristic (ROC) are plotted based on the com
 \caption{Precision and Recall curves of different combinations of centralities for Random Forest}
 \end{figure}
 
-Above figures depict different Precision and Recall curves for different combination of centrality inputs and how Random Forest Classification model performed in both ppi and simplicial complexes networks. According to the figures, maximum average precision over all the combinations of centralities as inputs is less than 20\% in ppi networks and simplicial complexes around 20\%. Also it is important to note that, some models seems to have a slower drop in precision in both Simplicial Complexes and PPI networks. We can see that simplicial complex models only perform better under certain combination of topological measures but the maximum average precision suggest that this enhancement in performance is not significant. For all the models, the precision barely increases as the recall increases and it’s almost constant after a certain recall in PPI networks.
+Above figures depict different Precision and Recall curves for different combination of centrality inputs. It also exhibits how Random Forest Classification model performed in both PPI and simplicial complexes networks. According to the figures, maximum average precision over all the combinations of centralities as inputs is less than 20\% in PPI networks and simplicial complexes around 20\%. Also it is important to note that, some models seems to have a slower drop in precision in both Simplicial Complexes and PPI networks. We can see that simplicial complex models only perform better under certain combination of topological measures but the maximum average precision suggest that this enhancement in performance is not significant. For all the models, the precision barely increases as the recall increases and it’s almost constant after a certain recall in PPI networks.
 
 \newpage
 \begin{figure}[!htb]
@@ -223,7 +223,7 @@ Above figures depict different Precision and Recall curves for different combina
 \endminipage
 \caption{Receiver Operating Characteristic curves of Random Forest}
 \end{figure}
-ROC curves for Random Forest Classification shows the similar performance, if not worse compared to the one we got for Logistic regression. On average, random forest classification gives us worse performance and worse average area under the curve. Also we can note that simplicial complexes do not perform better in some combinations of inputs as measures.
+ROC curves for Random Forest Classification shows the similar performance, if not worse compared to the results we got for Logistic regression. On average, random forest classification gives us worse performance and average area under the curve. Also we can note that simplicial complexes do not perform better in some combinations of inputs as measures.
 
 \subsection{Agglomerative Clustering}
 \begin{figure}[!htb]
@@ -233,7 +233,7 @@ ROC curves for Random Forest Classification shows the similar performance, if no
 \endminipage
 \caption{Enrichment graph of PPI and Simplicial}
 \end{figure}
-We applied agglomerative clustering on the genes centrality data that we have collected on both ppi and simplicial complexes.We analysed each cluster to see if any of the GO terms are enriched in them. We compute the probability of a GO term enrichment using the standard model of sampling without replacement. 
+We applied agglomerative clustering on the genes centrality data that we have collected on both PPI and simplicial complexes.We analysed each cluster to see if any of the GO terms are enriched in them. We compute the probability of a GO term enrichment using the standard model of sampling without replacement. 
 \begin{equation}
 p = 1 - \sum_{X-1}^{i=0}\binom{K}{i}\binom{M-K}{N-i}\bigg/\binom{M}{N}
 \end{equation}
