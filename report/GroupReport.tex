@@ -2,6 +2,7 @@
 \usepackage{array}
 \newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
 \usepackage{graphicx}
+\usepackage[margin=0.7in]{geometry}
 \usepackage[font={small,it}]{caption}
 \usepackage{amsmath}
 \usepackage{caption}
@@ -9,10 +10,6 @@
 \usepackage{subfig}
 \usepackage[parfill]{parskip}
 \usepackage{float}
-\usepackage[margin=1in,includefoot]{geometry}
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-\fancyfoot{}
 
 \begin{document}
 
@@ -37,7 +34,7 @@
 
 \newpage
 \section{Abstract}\label{sec:abstract}
-Topological analyses of protein-protein interaction networks (PPI) for protein function prediction predominantly use graph-based approaches. This representation cannot represent higher order organisations of interactions found in protein complexes or biological pathways. Therefore, we explore another form of data representation, simplicial complexes, that is capable of modeling interactions between groups of proteins. Additionally, we extend degree distribution, betweenness, and closeness centrality measures to be used in simplicial complexes. The purpose of our investigation is to see if geometric descriptors of proteins, modelled by simplicial complexes with a set of centrality measures, in \textit{Saccharomyces cerevisiae} (baker’s yeast), relate to their biological function. For our analysis we used machine learning models, such as regression-based and random forest algorithms. Furthermore, we also used a hierarchical agglomerative clustering (HAC) algorithm for enrichment analysis of the genes. Our results for the regression-based and random forest models show that simplicial complexes did not exhibit any significant advantage over using a graph-based PPI. Moreover, for HAC, our results for simplicial complexes did not produce more enriched gene sets in comparison to the graph-based PPI. Both these sets of results suggest that modelling PPIs as simplicial complexes do not hold any significant advantage over graph-based PPIs.
+Topological analyses of protein-protein interaction networks (PPI) for protein function prediction predominantly use graph-based approaches. This representation cannot represent higher order organisations of interactions found in protein complexes or biological pathways. Therefore, we explore another form of data representation, simplicial complexes, that is capable of modeling interactions between groups of proteins. Additionally, we extend degree distribution, betweenness, and closeness centrality measures to be used in simplicial complexes. The purpose of our investigation is to see if geometric descriptors of proteins, modelled by simplicial complexes with a set of centrality measures, in \textit{Saccharomyces cerevisiae} (baker’s yeast), relate to their biological function. For our analysis we used machine learning models, such as regression-based and random forest algorithms. Furthermore, we also used a hierarchical agglomerative clustering (HAC) algorithm for enrichment analysis of the genes. Our results for the regression-based and random forest models show that simplicial complexes did not exhibit any significant advantage over using a graph-based PPI. Moreover, for HAC, our results for simplicial complexes did not produce more enriched gene sets in comparison to the graph-based PPI. However, despite these results we find that there is still not enough evidence to establish that there is an advantage in modelling PPIs as simplicial complexes, over graph-based PPIs
 
 \section{Introduction}\label{sec:Introduction}
 Genes are units of genetic information found in DNA, and contain instructions for building vital macromolecules known as proteins. Proteins contribute to crucial processes including transportation of molecules in cells, and catalysing metabolic reactions. The notion of protein function is very context-sensitive, but commonly describes an umbrella-term for all types of processes that a protein can be involved in, such as cellular, molecular, or physiological processes [6]. Consequently, protein function prediction explores the methods employed by bioinformatics researchers to assign such functions to poorly-studied proteins. Furthermore, these methods can provide important benefits in various ways. Some examples include improving understanding of disease, since alterations of proteins are the cause for many diseases, and to aid drug design [7].
@@ -55,7 +52,8 @@ For our study, we worked on \textit{Saccharomyces cerevisiae} (baker’s yeast) 
 After doing so, we collected the biological annotations of each protein from Gene Ontology (GO) [24], a framework that describes gene functions and the relationships between them. The initiative provides an ontology of GO terms, which represent gene product properties.
 \par
 To build our machine learning models, we used Scikit-learn [29], a python library that offers a wide range of regression, clustering and classification algorithms. However, before creating the models, we use a cross-validation method by performing a random split of the data in an 8:2 ratio. The former of the split data is used to train the model and the latter is used for validation of the model. We then trained our models with linear regression, logistic regression, random forest classifier, and random forest regressor algorithms. We also worked with hierarchical agglomerative clustering (HAC), a type of bottom-up hierarchical clustering technique, for enrichment analysis. The resulting clusters of genes would then be subject to enrichment analysis where each gene set is compared to GO terms, and a statistical test would calculate for each GO term whether it is enriched for the input genes. 
-The purpose of our study is to investigate a way to model multi-scale protein organisation, by using simplicial complexes with a set of centrality measures, and observe if geometric descriptors of proteins in \textit{Saccharomyces cerevisiae} (baker’s yeast) relate to their biological function.
+\par
+The purpose of our study is to investigate a way to model multi-scale protein organisation, by using simplicial complexes with a set of centrality measures, and observe if geometric descriptors of proteins in \textit{Saccharomyces cerevisiae} (baker’s yeast) relate to their biological function.We also look to see if representations involving simplicial complexes provide an increase in predictive performance.
 
 \section{Related Work}
 A big inspiration for our investigation can be found in a study published in the Journal of Theoretical Biology by Estrada \& Ross (2018) [1]. In this study, Estrada \& Ross extend the concept of node centrality from simple graphs to simplicial complexes. They calculate three main centrality measures (degree distribution, subgraph, and closeness) in a yeast network. One of the outcomes when they studied the correlations between centrality measures found that centralities at different simplicial levels had a lot of variation and did not necessarily agree with each other. This knowledge is useful for future studies, like ours, since we happen to use two same centrality measures of the three, being degree distribution and closeness, on a yeast PPI. However, the main difference between our methodologies is that we hope to extend centralities to simplicial complexes to aid protein function prediction, as opposed to identifying essential proteins.
@@ -134,13 +132,8 @@ Lastly, we attempted hierarchical agglomerative clustering which is a bottom up 
 This is achieved by choosing a suitable metric such as a measure of distance between the pairs, in our case the Euclidean distance. A appropriate metric will impact the shape of the clusters, since some elements may be close to each other to one distance but farther away from another. Additionally, a linkage basis is required, a linkage “specifies the dissimilarity of sets as a function of the pairwise distances of observations in the sets”, in our case it is the Ward’s method.  Using clustering we performed an enrichment analysis, which is a method to identify classes of proteins that are over represented or underrepresented using annotations for that gene set. 
 
 \subsection{Benchmarks}
-No reasonable benchmarks except possibly comparing spearman’s rank correlation coefficients with Estrada paper. Even still they use an entirely different dataset as well as a slightly different methodology. It is important to note that the purpose of this paper is to experiment on soley new ideas and methodologies that have not been done in the past, thus finding out new results.  
+For building proteins as simplicial complexes, no reasonable benchmarks exist. The only existing method  that bears resemblance to our methodology are other forms of clustering methods. An example of such a benchmark method is the CLEAN score proposed by Freudenberg et al [36]. In the paper, they suggest that the CLEAN score approach is a better approach for the integration of biological context to cluster analysis, as opposed to traditional cluster-based scores. The ROC curves that they produced were also insufficient evidence of being accurately able to assess the true and false positives of co-clustered gene pairs when a huge number of Gene Ontology terms are used [36], much like our own results gained from ROC curves. However, unlike the case with our hypothesis, they were able to conclude that their proposed method was indeed superior to traditional cluster-based approaches. 
 
-[Needs to be re-written nicely]
-For building proteins as simplicial complexes, no reasonable benchmarks exist. The only existing method(s) that bears resemblance are the other HAC or even other forms of clustering methods, for gene enrichment analysis. 
-For PPI, *look through the papers and see if any of them have a different score to us?*
-
-\newpage
 \section{Analysis of Results}
 \subsection{Linear Regression}
 \begin{center}
@@ -238,11 +231,14 @@ ROC curves for Random Forest Classification shows the similar performance, if no
 \endminipage
 \caption{Enrichment graph of PPI and Simplicial}
 \end{figure}
-We applied agglomerative clustering on the genes centrality data that we have collected on both ppi and simplicial complexes. We analysed each cluster to see if any of the GO terms are enriched in them. We calculated the p value for each GO term in each cluster for both ppi and simplicial complexes [41].
+We applied agglomerative clustering on the genes centrality data that we have collected on both ppi and simplicial complexes.We analysed each cluster to see if any of the GO terms are enriched in them. We compute the probability of a GO term enrichment using the standard model of sampling without replacement. 
 \begin{equation}
 p = 1 - \sum_{X-1}^{i=0}\binom{K}{i}\binom{M-K}{N-i}\bigg/\binom{M}{N}
 \end{equation}
-We repeated the experiment by changing the number of clusters from 100 - 800 incrementing by 100 every time. The above figure depicts the number of clusters we have in the experiment and the number of enriched GO terms in that experiment. As we can see clustering based on all three centralities (betweenness, closeness and degree distribution) in simplicial complexes, did not give us more enriched GO terms. The figure also shows that as we increase the number of clusters, the number of enriched GO terms increases in both PPI and simplicial complexes. For future, this clustering may be used for predicting GO terms in the clusters. Also we can use combinations of centralities for our clustering model in future to see if we get better enrichments in both simplicial complexes and ppi networks. 
+where N is the size of the cluster (only annotated genes from the cluster are taken into account), X is the number of genes in the cluster that are annotated with the GO term in question, M is the number of all genes in the network that are annotated with any GO term, and K is the number of genes in the network that are annotated with the GO term in question. A cluster is significantly enriched in a given GO term if the corresponding p-value is smaller than or equal to 0.05 [41].
+\par 
+We calculated the p value for each GO term in each cluster for both ppi and simplicial complexes [41]. We repeated the experiment by changing the number of clusters from 100 - 800 incrementing by 100 every time. The above figure depicts the number of clusters we have in the experiment and the number of enriched GO terms in that experiment. As we can see clustering based on all three centralities (betweenness, closeness and degree distribution) in simplicial complexes, did not give us more enriched GO terms. The figure also shows that as we increase the number of clusters, the number of enriched GO terms increases in both PPI and simplicial complexes. For future, this clustering may be used for predicting GO terms in the clusters. Also
+we can use combinations of centralities for our clustering model in future to see if we get better enrichments in both simplicial complexes and ppi networks.
 
 \section{Discussion \& Limitations} 
 After placing the complexes data on top of the PPI network, in order to build the simplicial complex, we had 66,482 triangles in the network. For us to compute closeness centrality and betweenness centrality, we needed to calculate the shortest paths between each pair of triangles. As Floyd Warshall’s shortest path algorithm is \(O(N^3)\), and the number of edges in the simplicial complexes is well over 150 million, which was computationally exhaustive to calculate. A naive implementation could take easily 11 days for betweenness centrality to complete. Additionally, as all the algorithms we implemented were in Python, which is a higher level language with a lot more abstractions, it is in fact much slower than other lower level languages like C or C++. Furthermore, it is worth mentioning that because of the computation time, we were not able to apply our methods to higher dimensions, further than triangles, in simplicial complexes.
