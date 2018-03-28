@@ -70,19 +70,24 @@ Additionally, there have been previous studies that similarly implemented cluste
 \section{Research Hypothesis}
 Our research hypothesis is that “The accuracy of protein function prediction is higher using the correlations provided by the combination of both PPI graph and simplicial complex data representations rather than PPI graphs alone”. 
 
-\section{Experiment Design}
-\subsection{Methodology}
-\subsubsection{Data Cleaning}
+\section{Dataset Description/Data Collection}
+In this section we will be defining the origin of our data sets as well as tools used for conversions of such data within our data cleaning process. As stated previously our focus has been in collecting data from saccharomyces cerevisiae as they are the most complete dataset.
+
+\subsection{BioGRID \& CYC2008}
+Biological General Repository for Interaction Datasets (BioGRID)[23] is an online repository for protein and genetic interactions. Its aim is to provide a comprehensive curated resource for all major species, such as homo sapiens and saccharomyces cerevisiae. Additionally, CYC2008 [25] provides an up-to-date reference set of yeast protein complexes which we have used in our experiments. 
+
+\section{Methodology}
+\subsection{Data Cleaning}
 Data cleaning was the first methodology we tackled to correct inaccurate records to increase the accuracy of our data as much as possible. We faced many issues regarding data uniformity, data duplication, data conversion and inaccurate or irrelevant fields within the data sets. 
 \par
 To minimise the effect of such problems, we used the most standardised databases for interaction datasets including: BioGRID (PPI networks), CYC2008 \& CORUM (Complexes networks), Gene Ontology (Biological annotations), as well as tools such bioDBnet for Gene ID conversion. More specifically, we have cleaned the data by only considering the experimental derived PPI’s to be only “Physical”. However, it important to note that even after cleaning the data we only have access to high throughput physical interactions, which are still very noisy due to biotechnological limitations and human bias
 
-\subsubsection{Protein-Protein Interaction Networks and Simplicial Complexes}
+\subsection{Protein-Protein Interaction Networks and Simplicial Complexes}
 After data cleaning, we proceeded in exploring different methodologies for the creation of PPI and Simplicial Complexes networks. We decided to use well established Python packages for PPI networks, as well as custom made packages specifically for simplicial complexes.
 \par
 For the making of the PPI networks we used NetworkX [31]., which is a Python package “for the creation, manipulation, and study of the structure, dynamics and functions of complex networks”. Some of the key features of this package were: Data structures for graphs, digraphs and multigraphs, many standard graph algorithms and network structure and analysis measure, which will be explored in the next section.However, for the creation of simplicial complexes networks we implemented our own networks since no such libraries exist. 
 
-\subsubsection{Centrality Measures}
+\subsection{Centrality Measures}
 Within network analysis and graph theory, centrality measures identify the most valuable nodes within a graph [ref]. Centrality measures ultimately tries to answer the question of  “what characterises an important node?”. From this measurement of centrality we can get an idea of the importance of a node within a given network, therefore we decided to both use libraries available to calculate the centrality measurements as well as implementing them from scratch. A complexity analysis of centrality measures will be discussed later in this report. Some of the key centralities explored are explained below
 
 \subsubsection{Degree Centrality}
@@ -101,7 +106,11 @@ C_B(v)=\sum_{s,t\in{V}}\frac{\sigma(s, t|v)}{\sigma(s, t)}
 \end{equation}
 “Where \(V\) is the set of nodes, \(\sigma(s, t)\) is the number of shortest \((s, t)\) paths, and \(\sigma(s, t|v)\) is the number of those paths passing through some node \(v\) other than \(s\), \(t\). If \(s = t\), \(\sigma(s, t) = 1\), and if \(v \in (s, t), \sigma(s, t|v) = 0\)”.
 
-\subsubsection{Machine Learning Models}
+\subsection{Annotation Vectors}
+We used data collected from Gene Ontology to map the relevant genes to their GO annotation, which described the function of the gene [24].
+In order to discard information that weren’t from experimentally valid sources, we traverse the column of genes, we also check its corresponding column vector and ensure that the Evidence ID belongs to list of ID’s from under ‘Experimental Evidence codes’ which shows that the GO term has been supported by physical characterization of the gene or gene product [24] as we cannot work with predicted data.Therefore it has to be one of the following: Inferred from Experiment (EXP), Inferred from Direct Assay (IDA), Inferred from Physical Interaction (IPI), Inferred from Mutant Phenotype (IMP), Inferred from Genetic Interaction (IGI) and Inferred from Expression Pattern (IEP) [24]. Using the mapping between genes and its corresponding GO:ID vectors, we constructed a matrix with binary values to indicate whether the selected GO:IDs were present in the gene’s vector or not.
+
+\subsection{Machine Learning Models}
 We decided to explore a variety of machine learning models, starting from the simplest and experimenting with more complex algorithms as we progressed In order to build our models, we used scikit-learn which is a free machine learning python library which offers a wide range of regression, clustering and classification algorithms. The core algorithms in this library are written in Cython to achieve performance. The machine models used are explained in more detail below. 
 
 \subsubsection{Linear Regression}
@@ -125,16 +134,6 @@ Additionally, we used random forest, which is a type of ensemble modelling. Ense
 Lastly, we attempted hierarchical agglomerative clustering which is a bottom up approach where each observation start within their own clusters and pairs of clusters are merged into new clusters as one moves up the hierarchy. To be able to correctly decide which clusters are combined with each other a measure between the sets are required. 
 
 This is achieved by choosing a suitable metric such as a measure of distance between the pairs, in our case the Euclidean distance. A appropriate metric will impact the shape of the clusters, since some elements may be close to each other to one distance but farther away from another. Additionally, a linkage basis is required, a linkage “specifies the dissimilarity of sets as a function of the pairwise distances of observations in the sets”, in our case it is the Ward’s method.  Using clustering we performed an enrichment analysis, which is a method to identify classes of proteins that are overrepresented or underrepresented using annotations for that gene set. 
-
-\subsubsection{Annotation Vectors}
-We used data collected from Gene Ontology to map the relevant genes to their GO annotation, which described the function of the gene [24].
-In order to discard information that weren’t from experimentally valid sources, we traverse the column of genes, we also check its corresponding column vector and ensure that the Evidence ID belongs to list of ID’s from under ‘Experimental Evidence codes’ which shows that the GO term has been supported by physical characterization of the gene or gene product [24] as we cannot work with predicted data.Therefore it has to be one of the following: Inferred from Experiment (EXP), Inferred from Direct Assay (IDA), Inferred from Physical Interaction (IPI), Inferred from Mutant Phenotype (IMP), Inferred from Genetic Interaction (IGI) and Inferred from Expression Pattern (IEP) [24]. Using the mapping between genes and its corresponding GO:ID vectors, we constructed a matrix with binary values to indicate whether the selected GO:IDs were present in the gene’s vector or not.
-
-\subsection{Dataset Description/Data Collection}
-In this section we will be defining the origin of our data sets as well as tools used for conversions of such data within our data cleaning process. As stated previously our focus has been in collecting data from saccharomyces cerevisiae as they are the most complete dataset.
-
-\subsubsection{BioGRID \& CYC2008}
-Biological General Repository for Interaction Datasets (BioGRID)[23] is an online repository for protein and genetic interactions. Its aim is to provide a comprehensive curated resource for all major species, such as homo sapiens and saccharomyces cerevisiae. Additionally, CYC2008 [25] provides an up-to-date reference set of yeast protein complexes which we have used in our experiments. 
 
 \subsection{Benchmarks}
 No reasonable benchmarks except possibly comparing spearman’s rank correlation coefficients with Estrada paper. Even still they use an entirely different dataset as well as a slightly different methodology. It is important to note that the purpose of this paper is to experiment on soley new ideas and methodologies that have not been done in the past, thus finding out new results.  
